@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+
+
+'''
+Created on Nov 3, 2014
+
+@author: Brady Johnson
+'''
+
+import optparse
+import subprocess
+import tempfile
+import Flows.FlowEntries as FlowEntries
+
+#
+# Execute a system command and return the return_code and stdout as a str
+#
+def execute_command(arg_list_str):
+    return_code = 0
+    stdout_str = ''
+
+    with tempfile.TemporaryFile(mode='w+b') as f:
+        # TODO wrap this in a try/catch block
+        try:
+            return_code=subprocess.call(arg_list_str, stdout=f, shell=True)
+        except OSError as e:
+            print 'OS Error [%d] \"%s\", with command \"%s\"' % (e.errno, e.strerror, ' '.join(arg_list_str))
+            return (-1, stdout_str)
+        except:
+            print 'Unexpected error with command: \"%s\"' % (' '.join(arg_list_str))
+            return (-1, stdout_str)
+
+        #print '\"%s\", rc=%d' % (' '.join(arg_list_str), return_code)
+
+        if return_code != 0:
+            print 'Non-zero return code [%d] for command: \"%s\"' % (return_code, ' '.join(arg_list_str))
+            return (return_code, stdout_str)
+
+        # Flush the tempfile and go to the beginning of it
+        f.flush()
+        f.seek(0, 0)
+
+        stdout_str = f.read()
+
+    return (return_code, stdout_str.split('\n'))
+
+
+def main():
+    #
+    # Command Line Options
+    #
+    parser = optparse.OptionParser(usage='Usage: %prog <option> [component...]')
+    parser.add_option('-v', '--verbose',
+                      action="store_true",
+                      help='verbose output: include packet and byte matches')
+    parser.add_option('-m', '--multiline',
+                      action="store_true",
+                      help='multiline output: Display flow entry output on multiple lines')
+    parser.add_option('-o', '--of',
+                      default='OpenFlow13',
+                      type=str,
+                      dest='open_flow_version',
+                      help='Specify the OpenFlow version [OpenFlow11 | OpenFlow13], default: OpenFlow13')
+
+    (options, args) = parser.parse_args()
+
+
+    #
+    # Call ovs-ofctl, the resulting output is stored in flow_entry_strs
+    #
+    command_str = 'ovs-ofctl -O %s dump-flows %s' % (options.open_flow_version, ' '.join(args))
+    print 'Executing command: %s' % command_str
+    (rc, flow_entry_strs) = execute_command([command_str])
+
+    if rc != 0:
+        return
+
+    #
+    # Parse each input line and store the resulting FlowEntries objects
+    flow_entries = FlowEntries.FlowEntryContainer()
+    for line in flow_entry_strs:
+        if line.startswith('OFPST_FLOW') or len(line) == 0:
+            continue
+        flow_entries.add_flow_entry(FlowEntries.FlowEntry.parse_entry(line.strip()))
+
+    # Output the results
+    print 'Displaying %d Flow entries' % (len(flow_entries))
+    flow_entry_fomatter = FlowEntries.FlowEntryFormatter(options.verbose, options.multiline)
+    for table in flow_entries.iter_tables():
+        print "\nTable[%d] %d entries"%(table, flow_entries.num_table_entries(table))
+        for entry in flow_entries.iter_table_entries(table):
+            flow_entry_fomatter.print_flow_entry(entry)
+
+    '''
+    for flow_entry in flow_entries:
+        flow_entry_fomatter.print_flow_entry(flow_entry)
+    '''
+
+if __name__ == '__main__':
+    main()
