@@ -171,6 +171,9 @@ class FlowEntryContainer(object):
             # append the entry to the existing table list
             flows_list.append(flow_entry)
 
+    def reset(self):
+        del self.flow_entries[:]
+        self.flow_entries_byTable.clear()
 
 # TODO need to finish this class. I dont like the multi-line output
 class FlowEntryFormatter(object):
@@ -189,12 +192,12 @@ class FlowEntryFormatter(object):
                 outstr_list.append('\n\t%s'%str(action))
 
             if self.verbose_:
-                print '\nTable=%d, Priority=%s, n_packets=%d, n_bytes=%d %s' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_, ''.join(outstr_list))
+                return '\nTable=%d, Priority=%s, n_packets=%d, n_bytes=%d %s' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_, ''.join(outstr_list))
             else:
-                print ''.join(outstr_list)
+                return ''.join(outstr_list)
         else:
             outstr = 'Matches(%d)[%s] Actions(%d)[%s]' % (len(flow_entry.match_str_list_), flow_entry.raw_match_, len(flow_entry.action_str_list_), flow_entry.raw_actions_)
             if self.verbose_:
-                print 'Table=%d, Priority=%s, n_packets=%d, n_bytes=%d %s' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_, outstr)
+                return 'Table=%d, Priority=%s, n_packets=%d, n_bytes=%d %s' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_, outstr)
             else:
-                print outstr
+                return outstr

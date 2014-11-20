@@ -7,6 +7,7 @@ Created on Nov 20, 2014
 import optparse
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
+from Gui.FlowDebuggerGui import FlowDebuggerGui
 
 class FlowDebuggerMain(object):
     def __init__(self):
@@ -22,7 +23,10 @@ class FlowDebuggerMain(object):
                                 help='verbose output: include packet and byte matches')
         self._parser.add_option('-m', '--multiline',
                                 action='store_true',
-                                help='multiline output: Display flow entry output on multiple lines')
+                                help='multiline output: Display flow entry output on multiple lines, stdout only')
+        self._parser.add_option('--matched-only',
+                                action='store_true',
+                                help='Only display flow entries that have matched')
         self._parser.add_option('-o', '--of',
                                 default='OpenFlow13',
                                 type=str,
@@ -45,20 +49,25 @@ class FlowDebuggerMain(object):
             else:
                 extra_args.append(arg)
 
-        # Returns an instance of FlowEntries.FlowEntryContainer
-        flow_entries = DumpFlows.dump_flows(switch=switch, table=table, of_version=options.open_flow_version)
-
-        # Output the results
+        #
+        # Output the results, either using a GUI or to stdout
+        #
         if options.gui:
-            print 'The GUI is not supported yet'
+            # TODO pass the -v and --match-only to the GUI
+            gui = FlowDebuggerGui(switch, table, options.open_flow_version, check_pkts=options.verbose, check_matched=options.matched_only)
+            gui.run()
         else:
             # Output to stdout
+            # Returns an instance of FlowEntries.FlowEntryContainer
+            flow_entries = DumpFlows.dump_flows(switch=switch, table=table, of_version=options.open_flow_version)
             print 'Displaying %d Flow entries' % (len(flow_entries))
+
             flow_entry_fomatter = FlowEntryFormatter(options.verbose, options.multiline)
             for table in flow_entries.iter_tables():
+                # TODO add matched-only logic here
                 print "\nTable[%d] %d entries"%(table, flow_entries.num_table_entries(table))
                 for entry in flow_entries.iter_table_entries(table):
-                    flow_entry_fomatter.print_flow_entry(entry)
+                    print flow_entry_fomatter.print_flow_entry(entry)
     
         '''
         for flow_entry in flow_entries:

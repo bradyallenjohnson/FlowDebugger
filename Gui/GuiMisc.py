@@ -10,25 +10,24 @@ Miscellaneous GUI classes used by the FlowDebuggerGui
 from Tkinter import *
 
 class LabelEntry(object):
-    def __init__(self, parent_frame, label_text, on_input_callable=None):
+    def __init__(self, parent_frame, label_text, entry_text='', on_input_callable=None):
         self._on_input_callback = on_input_callable
 
         self._label_entry_frame = Frame(parent_frame)
         self._label_entry_frame.pack(side=TOP)
 
         self._label_var = StringVar(value=label_text)
-        self._label = Label(self._label_entry_frame, textvariable=self._label_var)
+        self._label = Label(self._label_entry_frame, textvariable=self._label_var, width=10, anchor=W, justify=LEFT)
         self._label.config(text=label_text)
         self._label.pack(side=LEFT)
 
-        self._entry_var = StringVar()
-        self._entry = Entry(self._label_entry_frame, bd=5, textvariable=self._entry_var)
+        self._entry_var = StringVar(value=entry_text)
+        self._entry = Entry(self._label_entry_frame, bd=3, textvariable=self._entry_var)
         self._entry.bind('<Return>', self._entry_input)
         self._entry.pack(side=RIGHT)
 
     def _entry_input(self, event):
-        print 'Text Entered: %s' % self.entry_text
-        print 'Label Text: %s' % self.label_text
+        print 'Label [%s] text entered: %s' % (self.label_text, self.entry_text)
         #self.clear_entry()
         #self.label_text = self.entry_text
         if self._on_input_callback != None:
@@ -88,3 +87,31 @@ class Buttons(object):
             button = Button(parent_frame, text=name, command=callback)
             button.pack(side=TOP, fill=X)
             self._buttons.append(button)
+
+class ScrolledList(object):
+    # TODO add columns to the Scrolled list:
+    #   http://stackoverflow.com/questions/5286093/display-listbox-with-columns-using-tkinter
+
+    def __init__(self, parent_frame):
+        self._vsbar = Scrollbar(parent_frame)
+        self._hsbar = Scrollbar(parent_frame, orient='horizontal')
+        self._list = Listbox(parent_frame, relief=SUNKEN, font=('courier', 12))
+
+        self._vsbar.config(command=self._list.yview, relief=SUNKEN)
+        self._hsbar.config(command=self._list.xview, relief=SUNKEN)
+        self._list.config(yscrollcommand=self._vsbar.set, relief=SUNKEN)
+        self._list.config(xscrollcommand=self._hsbar.set)
+
+        self._vsbar.pack(side=RIGHT, fill=Y)
+        self._hsbar.pack(side=BOTTOM, fill=X)
+        self._list.pack(side=LEFT, expand=YES, fill=BOTH)
+        #self._list.bind('<Double-1>', self.handlelist)
+
+        self._list_pos = 0
+
+    def append_list_entry(self, entry_str, fg=None):
+        self._list_pos += 1
+        self._list.insert(END, entry_str)
+        if fg != None:
+            size = self._list.size()
+            self._list.itemconfig(size-1, fg=fg)
