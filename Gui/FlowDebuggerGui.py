@@ -22,7 +22,7 @@ class FlowDebuggerGui(object):
 
         # The text labels
         label_entry_frame = Frame(self._top_frame)
-        label_entry_frame.pack(side=LEFT)
+        label_entry_frame.pack(side=LEFT, anchor=W)
         self._host_label   = LabelEntry(label_entry_frame, 'Host',       'localhost')
         self._ofver_label  = LabelEntry(label_entry_frame, 'OF version', of_version) # Make this a pull-down choice of OpenFlow11 or OpenFlow13
         self._switch_label = LabelEntry(label_entry_frame, 'Switch',     switch)
@@ -65,6 +65,6 @@ class FlowDebuggerGui(object):
             # TODO add matched-only logic here
             num_table_entries = flow_entries.num_table_entries(table)
             self._list.append_list_entry('')
-            self._list.append_list_entry('Table[%d] %d entr' % (table, num_table_entries, 'y' if num_table_entries==1 else 'ies'), fg='red')
+            self._list.append_list_entry('Table[%d] %d entr%s' % (table, num_table_entries, 'y' if num_table_entries==1 else 'ies'), fg='red')
             for entry in flow_entries.iter_table_entries(table):
                 self._list.append_list_entry(flow_entry_fomatter.print_flow_entry(entry))

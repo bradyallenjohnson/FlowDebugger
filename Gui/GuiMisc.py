@@ -54,7 +54,7 @@ class LabelEntry(object):
 class Checked(object):
     def __init__(self, parent_frame, check_text, set_checked=False, on_check_callback=None, on_uncheck_callback=None):
         self._checked_value = IntVar(value=1 if set_checked else 0)
-        self._check = Checkbutton(parent_frame, text=check_text, variable=self._checked_value, command=self._on_check)
+        self._check = Checkbutton(parent_frame, text=check_text, variable=self._checked_value, command=self._on_check, anchor=W, justify=LEFT)
         self._check.pack(side=TOP)
         self._on_check_callback = on_check_callback
         self._on_uncheck_callback = on_uncheck_callback
