@@ -175,29 +175,48 @@ class FlowEntryContainer(object):
         del self.flow_entries[:]
         self.flow_entries_byTable.clear()
 
-# TODO need to finish this class. I dont like the multi-line output
 class FlowEntryFormatter(object):
+    # For now verbose is the same as show_packets_bytes, for more verbose resolution, use the get/set_show_* functions
     def __init__(self, verbose=False, multiline=False):
-        self.verbose_ = verbose
-        self.multiline_ = multiline
+        self._multiline = multiline
+        self._show_cookie = False
+        self._show_packets_bytes = False
+        self._show_duration = False
+        self._verbose = verbose
+        if verbose:
+            self._show_packets_bytes = True
+
+    def get_show_cookie(self):        return self._show_cookie
+    def get_show_packets_bytes(self): return self._show_packets_bytes
+    def get_show_duration(self):      return self._show_duration
+    def get_verbose(self):            return self._verbose or self._show_packets_bytes
+    def set_show_cookie(self, show):         self._show_cookie = show
+    def set_show_packets_bytes(self, show):  self._show_packets_bytes = show
+    def set_show_duration(self, show):       self._show_duration = show
+    def set_verbose(self, show):             self._verbose = self._show_packets_bytes = show
+    show_cookie = property(fset=set_show_cookie, fget=get_show_cookie)
+    show_packets_bytes = property(fset=set_show_packets_bytes, fget=get_show_packets_bytes)
+    show_duration = property(fset=set_show_duration, fget=get_show_duration)
+    show_verbose = property(fset=set_verbose, fget=get_verbose)
 
     def print_flow_entry(self, flow_entry):
-        if self.multiline_:
-            #outstr = '\nMatches(%d)\n\t%s\nActions(%d)\n\t%s'% (len(flow_entry.match_str_list_), '\n\t'.join(flow_entry.match_str_list_), len(flow_entry.action_str_list_), '\n\t'.join(flow_entry.action_str_list_))
-            outstr_list = ['\nMatches(%d)'%len(flow_entry.match_object_list_)]
+        outstr_list = []
+        if self._verbose:
+            outstr_list.append('Table=%d, Priority=%s, n_packets=%d, n_bytes=%d ' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_))
+        if self._show_cookie:
+            outstr_list.append('Cookie=%s '%flow_entry.cookie_)
+        if self._show_duration:
+            outstr_list.append('Duration=%s '%flow_entry.duration_)
+
+        if self._multiline:
+            outstr_list.append('\nMatches(%d)'%len(flow_entry.match_object_list_))
             for match in flow_entry.match_object_list_:
                 outstr_list.append('\n\t%s'%str(match))
             outstr_list.append('\nActions(%d)'%len(flow_entry.action_object_list_))
             for action in flow_entry.action_object_list_:
                 outstr_list.append('\n\t%s'%str(action))
 
-            if self.verbose_:
-                return '\nTable=%d, Priority=%s, n_packets=%d, n_bytes=%d %s' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_, ''.join(outstr_list))
-            else:
-                return ''.join(outstr_list)
+            return '\n%s'%''.join(outstr_list)
         else:
-            outstr = 'Matches(%d)[%s] Actions(%d)[%s]' % (len(flow_entry.match_str_list_), flow_entry.raw_match_, len(flow_entry.action_str_list_), flow_entry.raw_actions_)
-            if self.verbose_:
-                return 'Table=%d, Priority=%s, n_packets=%d, n_bytes=%d %s' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_, outstr)
-            else:
-                return outstr
+            outstr_list.append('Matches(%d)[%s] Actions(%d)[%s]' % (len(flow_entry.match_str_list_), flow_entry.raw_match_, len(flow_entry.action_str_list_), flow_entry.raw_actions_))
+            return '%s'%''.join(outstr_list)

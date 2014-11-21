@@ -54,7 +54,7 @@ class LabelEntry(object):
 class Checked(object):
     def __init__(self, parent_frame, check_text, set_checked=False, on_check_callback=None, on_uncheck_callback=None):
         self._checked_value = IntVar(value=1 if set_checked else 0)
-        self._check = Checkbutton(parent_frame, text=check_text, variable=self._checked_value, command=self._on_check, anchor=W, justify=LEFT)
+        self._check = Checkbutton(parent_frame, text=check_text, variable=self._checked_value, command=self._on_check, anchor=W, justify=LEFT, width=15)
         self._check.pack(side=TOP)
         self._on_check_callback = on_check_callback
         self._on_uncheck_callback = on_uncheck_callback
@@ -85,7 +85,7 @@ class Buttons(object):
         self._buttons = []
         for (name, callback) in buttons_dict.iteritems():
             button = Button(parent_frame, text=name, command=callback)
-            button.pack(side=TOP, fill=X)
+            button.pack(side=TOP, fill=X, expand=NO, anchor=E)
             self._buttons.append(button)
 
 class ScrolledList(object):
@@ -108,6 +108,9 @@ class ScrolledList(object):
         #self._list.bind('<Double-1>', self.handlelist)
 
         self._list_pos = 0
+
+    def clear(self):
+        self._list.delete(0, END)
 
     def append_list_entry(self, entry_str, fg=None):
         self._list_pos += 1

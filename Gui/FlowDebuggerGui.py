@@ -22,7 +22,7 @@ class FlowDebuggerGui(object):
 
         # The text labels
         label_entry_frame = Frame(self._top_frame)
-        label_entry_frame.pack(side=LEFT, anchor=W)
+        label_entry_frame.pack(side=LEFT, anchor=W, expand=YES, fill=X)
         self._host_label   = LabelEntry(label_entry_frame, 'Host',       'localhost')
         self._ofver_label  = LabelEntry(label_entry_frame, 'OF version', of_version) # Make this a pull-down choice of OpenFlow11 or OpenFlow13
         self._switch_label = LabelEntry(label_entry_frame, 'Switch',     switch)
@@ -31,7 +31,7 @@ class FlowDebuggerGui(object):
         # The info to display
         # TODO move these to a "View" pull-down menu
         checks_frame = Frame(self._top_frame)
-        checks_frame.pack(side=LEFT)
+        checks_frame.pack(side=LEFT, anchor=N, expand=NO, fill=X)
         self._check_pkts         = Checked(checks_frame, 'show Pkts/Bytes',   set_checked=check_pkts)
         self._check_duration     = Checked(checks_frame, 'show duration',     set_checked=check_duration)
         self._check_cookie       = Checked(checks_frame, 'show cookie',       set_checked=check_cookie)
@@ -39,7 +39,7 @@ class FlowDebuggerGui(object):
 
         # the buttons
         button_frame = Frame(self._top_frame)
-        button_frame.pack(side=RIGHT)
+        button_frame.pack(side=RIGHT, anchor=E, expand=NO, fill=X)
         buttons_dict = {'refresh' : self._refresh_callback, 'quit' : self._root.quit}
         Buttons(button_frame, buttons_dict)
 
@@ -53,18 +53,30 @@ class FlowDebuggerGui(object):
         self._root.mainloop()
 
     def _refresh_callback(self):
-        print 'Refresh was called'
 
         # TODO if switch is empty, then dont call DumpFlows until its filled in and refresh is called
+
+        self._list.clear()
+
+        if len(self._switch_label.entry_text) == 0:
+            # TODO launch a pop-up
+            print 'Nothing to refresh, switch is empty'
+            return
 
         flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
                                             table=self._table_label.entry_text,
                                             of_version=self._ofver_label.entry_text)
-        flow_entry_fomatter = FlowEntryFormatter(True) # TODO need to map check boxes to this option
+        flow_entry_formatter = FlowEntryFormatter(verbose=self._check_pkts.checked)
+        flow_entry_formatter.show_cookie = self._check_cookie.checked
+        flow_entry_formatter.show_duration = self._check_duration.checked
+        flow_entry_formatter.show_packets_bytes = self._check_pkts
+
         for table in flow_entries.iter_tables():
             # TODO add matched-only logic here
             num_table_entries = flow_entries.num_table_entries(table)
             self._list.append_list_entry('')
             self._list.append_list_entry('Table[%d] %d entr%s' % (table, num_table_entries, 'y' if num_table_entries==1 else 'ies'), fg='red')
             for entry in flow_entries.iter_table_entries(table):
-                self._list.append_list_entry(flow_entry_fomatter.print_flow_entry(entry))
+                if self._check_matched_only.checked and entry.n_packets_ == 0:
+                    continue
+                self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))

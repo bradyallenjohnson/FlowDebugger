@@ -14,6 +14,7 @@ import sys
 # so it cant find from where to import Flows.FlowEntries
 # When FlowDebugger/Flows (and others) is correctly installed, this wont be a problem anymore.
 sys.path.append('/home/mininet/FlowDebugger')
+sys.path.append('/home/mcl/workspace/FlowDebugger')
 #print sys.path
 
 from Flows.FlowDebuggerMain import FlowDebuggerMain

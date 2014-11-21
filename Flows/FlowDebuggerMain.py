@@ -17,7 +17,10 @@ class FlowDebuggerMain(object):
         self._parser = optparse.OptionParser(usage='Usage: %prog <option> [component...]')
         self._parser.add_option('-g', '--gui',
                                 action='store_true',
-                                help='start the application in a GUI as opposed to displaying on stdout')
+                                help='start the application in a GUI as opposed to displaying on stdout, Default')
+        self._parser.add_option('-s', '--stdout',
+                                action='store_true',
+                                help='Dont start the GUI, all output will be displayed on stdout')
         self._parser.add_option('-v', '--verbose',
                                 action='store_true',
                                 help='verbose output: include packet and byte matches')
@@ -36,28 +39,28 @@ class FlowDebuggerMain(object):
     def main(self):
         (options, args) = self._parser.parse_args()
 
-        if len(args) < 1:
-            print "INVALID Arguments, must at least specify the switch"
-            return
-
-        switch = args[0]
+        switch = ''
         table = ''
         extra_args = []
-        for arg in args[1:]:
-            if arg.starts_with('table='):
-                table = arg.split('=')[1]
-            else:
-                extra_args.append(arg)
+        if len(args) > 0:
+            switch = args[0]
+            table = ''
+            extra_args = []
+            for arg in args[1:]:
+                if arg.starts_with('table='):
+                    table = arg.split('=')[1]
+                else:
+                    extra_args.append(arg)
 
         #
         # Output the results, either using a GUI or to stdout
         #
-        if options.gui:
-            # TODO pass the -v and --match-only to the GUI
-            gui = FlowDebuggerGui(switch, table, options.open_flow_version, check_pkts=options.verbose, check_matched=options.matched_only)
-            gui.run()
-        else:
+        if options.stdout:
             # Output to stdout
+            if len(args) < 1:
+                print "INVALID Arguments, must at least specify the switch"
+                return
+
             # Returns an instance of FlowEntries.FlowEntryContainer
             flow_entries = DumpFlows.dump_flows(switch=switch, table=table, of_version=options.open_flow_version)
             print 'Displaying %d Flow entries' % (len(flow_entries))
@@ -68,7 +71,11 @@ class FlowDebuggerMain(object):
                 print "\nTable[%d] %d entries"%(table, flow_entries.num_table_entries(table))
                 for entry in flow_entries.iter_table_entries(table):
                     print flow_entry_fomatter.print_flow_entry(entry)
-    
+        else:
+            # TODO pass the -v and --match-only to the GUI
+            gui = FlowDebuggerGui(switch, table, options.open_flow_version, check_pkts=options.verbose, check_matched=options.matched_only)
+            gui.run()
+
         '''
         for flow_entry in flow_entries:
             flow_entry_fomatter.print_flow_entry(flow_entry)
