@@ -11,3 +11,5 @@ To be completed:
 - Add tracing feature: allow an input pkt to be specified, then pressing a trace button, you can see the flow through the OFS tables
 	This is similar to the "ovs-appctl trace" feature
 - Possibly move the checkboxes to a "View" pull-down menu
+- bin/flow_debugger has the sys.path hard-coded. This will be fixed once the FlowDebugger is officially installed via setup.py
+	-- setting the PYTHONPATH env var wont fix the problem since you need to start the app with sudo
