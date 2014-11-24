@@ -54,8 +54,6 @@ class FlowDebuggerGui(object):
 
     def _refresh_callback(self):
 
-        # TODO if switch is empty, then dont call DumpFlows until its filled in and refresh is called
-
         self._list.clear()
 
         if len(self._switch_label.entry_text) == 0:
@@ -72,7 +70,6 @@ class FlowDebuggerGui(object):
         flow_entry_formatter.show_packets_bytes = self._check_pkts
 
         for table in flow_entries.iter_tables():
-            # TODO add matched-only logic here
             num_table_entries = flow_entries.num_table_entries(table)
             self._list.append_list_entry('')
             self._list.append_list_entry('Table[%d] %d entr%s' % (table, num_table_entries, 'y' if num_table_entries==1 else 'ies'), fg='red')

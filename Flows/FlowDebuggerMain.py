@@ -56,7 +56,9 @@ class FlowDebuggerMain(object):
         # Output the results, either using a GUI or to stdout
         #
         if options.stdout:
+            #
             # Output to stdout
+            #
             if len(args) < 1:
                 print "INVALID Arguments, must at least specify the switch"
                 return
@@ -70,13 +72,12 @@ class FlowDebuggerMain(object):
                 # TODO add matched-only logic here
                 print "\nTable[%d] %d entries"%(table, flow_entries.num_table_entries(table))
                 for entry in flow_entries.iter_table_entries(table):
+                    if options.matched_only and entry.n_packets_ == 0:
+                        continue
                     print flow_entry_fomatter.print_flow_entry(entry)
         else:
-            # TODO pass the -v and --match-only to the GUI
+            #
+            # GUI
+            #
             gui = FlowDebuggerGui(switch, table, options.open_flow_version, check_pkts=options.verbose, check_matched=options.matched_only)
             gui.run()
-
-        '''
-        for flow_entry in flow_entries:
-            flow_entry_fomatter.print_flow_entry(flow_entry)
-        '''

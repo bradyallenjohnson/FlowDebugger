@@ -11,7 +11,7 @@ import inspect
 # The parsing is done via the derived class Python Properties. For each output field
 # to be parsed, a corresponding Python property should exist: the property name should
 # be exactly the same as the field to be parsed.
-# Then the property names are stored in the FlowEntryActionFactory._flow_match_setters
+# Then the property names are stored in the FlowEntryFactory._flow_match_setters
 # dictionary and the corresponding value is a list: [class type to instantiate, property setter to call]
 # This way, we dont need big if/else checks, all the string checking is done via the 
 # Python dictionary.
@@ -19,35 +19,6 @@ import inspect
 # overridden to print all properties using the property fget function. This way, we
 # dont need __str__() functions in all the derived classes.
 #  
-
-# TODO the FlowEntryActionFactory and FlowEntryMatchesFactory classes  
-#      basically do the same thing consider combining them into one
-
-class FlowEntryActionFactory(object):
-    _flow_action_setters = {} # dictionary {'key' : [class type, property setter func]}
-    _initialized = False
-
-    @staticmethod
-    def _init_flow_action_dict():
-        for flow_entry_action in [FlowEntryActionSwitch(), FlowEntryActionSwitchPort(), FlowEntryActionSetField()]:
-            attributes = inspect.getmembers(type(flow_entry_action), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
-            for attr in attributes:
-                if not(attr[0].startswith('__') and attr[0].endswith('__')):
-                    FlowEntryActionFactory._flow_action_setters[attr[0]] = [type(flow_entry_action), attr[1].fset]
-        FlowEntryActionFactory._initialized = True
-
-    @staticmethod
-    def parse_action(action_str):
-        if not FlowEntryActionFactory._initialized:
-            FlowEntryActionFactory._init_flow_action_dict()
-        parser_obj_list = FlowEntryActionFactory._flow_action_setters.get(action_str.split(':')[0], [FlowEntryActionUnknown.__class__, None])
-        obj = parser_obj_list[0](action_str) # instantiate the object
-        if parser_obj_list[1] != None:       # call the property setter, if there is one
-            parser_obj_list[1](obj, obj.action_str_value)
-        else:
-            print 'Cant parse: %s' % action_str
-
-        return obj
 
 #
 # Base class for FlowEntry Actions

@@ -7,7 +7,8 @@ Miscellaneous GUI classes used by the FlowDebuggerGui
 
 '''
 
-from Tkinter import *
+from Tkinter import Frame, Label, Entry, Checkbutton, Button, Scrollbar, Listbox, StringVar, IntVar
+from Tkinter import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X, Y, YES
 
 class LabelEntry(object):
     def __init__(self, parent_frame, label_text, entry_text='', on_input_callable=None):

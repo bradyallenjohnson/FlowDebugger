@@ -4,18 +4,7 @@ Created on Nov 3, 2014
 @author: Brady Johnson
 '''
 
-import FlowEntryMatches
-import FlowEntryActions
-
 class FlowEntry(object):
-    COOKIE_STR         =  'cookie='
-    DURATION_STR       =  'duration='
-    TABLE_STR          =  'table='
-    NPACKETS_STR       =  'n_packets='
-    NBYTES_STR         =  'n_bytes='
-    SEND_FLOW_REM_STR  =  'senf_flow_rem'
-    ACTIONS_STR        =  'actions='
-
 
     def __init__(self):
         '''
@@ -45,54 +34,6 @@ class FlowEntry(object):
             return True
 
         return self.raw_match_ < other.raw_match_
-
-    @staticmethod
-    def parse_item(item_key, item_str):
-        value = item_str
-        if len(item_key) > 0:
-            value = item_str.partition(item_key)[2]
-
-        return value.rstrip(',')
-
-    @staticmethod
-    def parse_entry(line):
-        '''
-        Expecting one of the following formats:
-          cookie=0x0, duration=1573.875s, table=0, n_packets=2, n_bytes=152, send_flow_rem priority=10 actions=goto_table:1
-          cookie=0xa, duration=1573.091s, table=1, n_packets=0, n_bytes=0, priority=256,ip,nw_src=172.16.150.134 actions=write_metadata:0x3e/0xfff,goto_table:2
-          cookie=0x0, duration=243628.614s, table=0, n_packets=251762, n_bytes=18340623, priority=0 actions=NORMAL
-        '''
-
-        str_list = line.split(' ')
-
-        flow_entry = FlowEntry()
-        flow_entry.cookie_    =  FlowEntry.parse_item(FlowEntry.COOKIE_STR,        str_list[0])
-        flow_entry.duration_  =  FlowEntry.parse_item(FlowEntry.DURATION_STR,      str_list[1])
-        flow_entry.table_     =  int(FlowEntry.parse_item(FlowEntry.TABLE_STR,     str_list[2]))
-        flow_entry.n_packets_ =  int(FlowEntry.parse_item(FlowEntry.NPACKETS_STR,  str_list[3]))
-        flow_entry.n_bytes_   =  int(FlowEntry.parse_item(FlowEntry.NBYTES_STR,    str_list[4]))
-
-        # Parse the send_flow_rem, if present
-        next_index = 5
-        if len(str_list) == 8:
-            flow_entry.send_flow_rem_ = True
-            next_index = 6
-
-        flow_entry.raw_match_   =  FlowEntry.parse_item('', str_list[next_index])
-        flow_entry.raw_actions_ =  FlowEntry.parse_item(FlowEntry.ACTIONS_STR, str_list[next_index+1])
-
-        flow_entry.action_str_list_ =  flow_entry.raw_actions_.split(',')
-        flow_entry.match_str_list_  =  flow_entry.raw_match_.split(',')
-        flow_entry.priority_        =  int(flow_entry.match_str_list_[0].split('=')[1])
-
-        # Parse each match string into a match object, skip the first element which is priority
-        for match_str in flow_entry.match_str_list_[1:]:
-            flow_entry.match_object_list_.append(FlowEntryMatches.FlowEntryMatchFactory.parse_match(match_str))
-
-        for action_str in flow_entry.action_str_list_:
-            flow_entry.action_object_list_.append(FlowEntryActions.FlowEntryActionFactory.parse_action(action_str))
-
-        return flow_entry
 
 
 class FlowEntryContainer(object):
@@ -174,6 +115,7 @@ class FlowEntryContainer(object):
     def reset(self):
         del self.flow_entries[:]
         self.flow_entries_byTable.clear()
+
 
 class FlowEntryFormatter(object):
     # For now verbose is the same as show_packets_bytes, for more verbose resolution, use the get/set_show_* functions

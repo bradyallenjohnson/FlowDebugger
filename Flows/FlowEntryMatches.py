@@ -11,7 +11,7 @@ import inspect
 # The parsing is done via the derived class Python Properties. For each output field
 # to be parsed, a corresponding Python property should exist: the property name should
 # be exactly the same as the field to be parsed.
-# Then the property names are stored in the FlowEntryMatchFactory._flow_match_setters
+# Then the property names are stored in the FlowEntryFactory._flow_match_setters
 # dictionary and the corresponding value is a list: [class type to instantiate, property setter to call]
 # This way, we dont need big if/else checks, all the string checking is done via the 
 # Python dictionary.
@@ -19,38 +19,6 @@ import inspect
 # overridden to print all properties using the property fget function. This way, we
 # dont need __str__() functions in all the derived classes.
 #  
-
-# TODO the FlowEntryActionFactory and FlowEntryMatchesFactory classes  
-#      basically do the same thing consider combining them into one
-#      The only thing needed to distinguish the two would be the classes used in _init_flow_match_dict()
-#      and how to split the match str. These could be passed into a common factory
-
-
-class FlowEntryMatchFactory(object):
-    _flow_match_setters = {} # dictionary {'key' : [class type, property setter func]}
-    _initialized = False
-
-    @staticmethod
-    def _init_flow_match_dict():
-        for flow_entry_match in [FlowEntryMatchSwitch(), FlowEntryMatchLayer2(), FlowEntryMatchLayer3(), FlowEntryMatchLayer4()]:
-            attributes = inspect.getmembers(type(flow_entry_match), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
-            for attr in attributes:
-                if not(attr[0].startswith('__') and attr[0].endswith('__')):
-                    FlowEntryMatchFactory._flow_match_setters[attr[0]] = [type(flow_entry_match), attr[1].fset]
-        FlowEntryMatchFactory._initialized = True
-
-    @staticmethod
-    def parse_match(match_str):
-        if not FlowEntryMatchFactory._initialized:
-            FlowEntryMatchFactory._init_flow_match_dict()
-        parser_obj_list = FlowEntryMatchFactory._flow_match_setters.get(match_str.split('=')[0], [FlowEntryMatchUnknown.__class__, None])
-        obj = parser_obj_list[0](match_str) # instantiate the object
-        if parser_obj_list[1] != None:      # call the property setter, if there is one
-            parser_obj_list[1](obj, obj.match_str_value)
-        else:
-            print 'Cant parse: %s' % match_str
-
-        return obj
 
 #
 # Base class for FlowEntry Matching
