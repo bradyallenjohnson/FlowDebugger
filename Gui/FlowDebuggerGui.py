@@ -19,11 +19,11 @@ class FlowDebuggerGui(object):
         self._root.title('Flow Debugger')
 
         self._top_frame = Frame(self._root)
-        self._top_frame.pack(side=TOP)
+        self._top_frame.pack(side=TOP, fill=X)
 
         # The text labels
         label_entry_frame = Frame(self._top_frame)
-        label_entry_frame.pack(side=LEFT, anchor=W, expand=YES, fill=X)
+        label_entry_frame.pack(side=LEFT, anchor=W)
         self._host_label   = LabelEntry(label_entry_frame, 'Host',       'localhost')
         self._ofver_label  = LabelEntry(label_entry_frame, 'OF version', of_version) # Make this a pull-down choice of OpenFlow11 or OpenFlow13
         self._switch_label = LabelEntry(label_entry_frame, 'Switch',     switch)
@@ -32,7 +32,7 @@ class FlowDebuggerGui(object):
         # The info to display
         # TODO move these to a "View" pull-down menu
         checks_frame = Frame(self._top_frame)
-        checks_frame.pack(side=LEFT, anchor=N, expand=NO, fill=X)
+        checks_frame.pack(side=LEFT, anchor=W)
         self._check_pkts         = Checked(checks_frame, 'show Pkts/Bytes',   set_checked=check_pkts)
         self._check_duration     = Checked(checks_frame, 'show duration',     set_checked=check_duration)
         self._check_cookie       = Checked(checks_frame, 'show cookie',       set_checked=check_cookie)
@@ -40,7 +40,7 @@ class FlowDebuggerGui(object):
 
         # the buttons
         button_frame = Frame(self._top_frame)
-        button_frame.pack(side=RIGHT, anchor=E, expand=NO, fill=X)
+        button_frame.pack(side=RIGHT, anchor=E)
         buttons_dict = {'refresh' : self._refresh_callback, 'quit' : self._root.quit}
         Buttons(button_frame, buttons_dict)
 
