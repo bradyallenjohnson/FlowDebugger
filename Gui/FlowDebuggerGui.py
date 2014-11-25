@@ -5,15 +5,16 @@ Created on Nov 20, 2014
 '''
 
 from Tkinter import Tk, Frame
-from Tkconstants import *
+from Tkconstants import BOTH, BOTTOM, E, LEFT, N, NO, RIGHT, TOP, W, X, YES
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
-from Gui.GuiMisc import LabelEntry, Checked, Buttons, ScrolledList
+from Gui.GuiMisc import Buttons, Checked, LabelEntry, Popup, ScrolledList
 
 class FlowDebuggerGui(object):
 
     # flow_entries is an instance of FlowEntries.FlowEntryContainer
     def __init__(self, switch, table, of_version, check_cookie=False, check_pkts=False, check_duration=False, check_matched=False):
+        self._first_refresh = True
         self._root = Tk()
         self._root.title('Flow Debugger')
 
@@ -57,8 +58,10 @@ class FlowDebuggerGui(object):
         self._list.clear()
 
         if len(self._switch_label.entry_text) == 0:
-            # TODO launch a pop-up
-            print 'Nothing to refresh, switch is empty'
+            if self._first_refresh:
+                self._first_refresh = False
+            else:
+                Popup('Nothing to refresh:\n\'Switch\' is empty')
             return
 
         flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,

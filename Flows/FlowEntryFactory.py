@@ -7,7 +7,7 @@ Created on Nov 24, 2014
 import inspect
 
 from Flows.FlowEntries import FlowEntry
-from Flows.FlowEntryActions import FlowEntryActionSwitch, FlowEntryActionSwitchPort, FlowEntryActionSetField, FlowEntryActionUnknown
+from Flows.FlowEntryActions import FlowEntryActionSwitch, FlowEntryActionSwitchPort, FlowEntryActionSetField, FlowEntryActionUnknown, FlowEntryActionMod
 from Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4, FlowEntryMatchUnknown
 
 class FlowEntryFactory(object):
@@ -42,7 +42,7 @@ class FlowEntryFactory(object):
     @staticmethod
     def _init_flow_action_dict():
         # The Python properties of each of these FlowEntryAction* classes is considered a parseable action entry
-        for flow_entry_action in [FlowEntryActionSwitch(), FlowEntryActionSwitchPort(), FlowEntryActionSetField()]:
+        for flow_entry_action in [FlowEntryActionSwitch(), FlowEntryActionSwitchPort(), FlowEntryActionSetField(), FlowEntryActionMod()]:
             attributes = inspect.getmembers(type(flow_entry_action), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
             for attr in attributes:
                 if not(attr[0].startswith('__') and attr[0].endswith('__')):
@@ -113,7 +113,7 @@ class FlowEntryFactory(object):
 
         flow_entry.action_str_list_ =  flow_entry.raw_actions_.split(',')
         flow_entry.match_str_list_  =  flow_entry.raw_match_.split(',')
-        if flow_entry.match_str_list_[0].starts_with('priority='):
+        if flow_entry.match_str_list_[0].startswith('priority='):
             flow_entry.priority_        =  int(flow_entry.match_str_list_[0].split('=')[1])
 
         # Parse each match string into a match object, skip the first element which is priority

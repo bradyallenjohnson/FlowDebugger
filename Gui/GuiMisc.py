@@ -7,8 +7,9 @@ Miscellaneous GUI classes used by the FlowDebuggerGui
 
 '''
 
-from Tkinter import Frame, Label, Entry, Checkbutton, Button, Scrollbar, Listbox, StringVar, IntVar
-from Tkinter import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X, Y, YES
+from Tkinter import Button, Checkbutton, Entry, Frame, IntVar, Label, Listbox, Scrollbar, StringVar
+from Tkconstants import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X, Y, YES
+import tkMessageBox
 
 class LabelEntry(object):
     def __init__(self, parent_frame, label_text, entry_text='', on_input_callable=None):
@@ -108,7 +109,7 @@ class ScrolledList(object):
         self._list.pack(side=LEFT, expand=YES, fill=BOTH)
         #self._list.bind('<Double-1>', self.handlelist)
 
-        self._list_pos = 0
+        self._list_pos = 0 # TODO is this var necessary?
 
     def clear(self):
         self._list.delete(0, END)
@@ -119,3 +120,7 @@ class ScrolledList(object):
         if fg != None:
             size = self._list.size()
             self._list.itemconfig(size-1, fg=fg)
+
+class Popup(object):
+    def __init__(self, popup_text):
+        tkMessageBox.showinfo("Info", popup_text)

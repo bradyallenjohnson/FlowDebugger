@@ -139,6 +139,52 @@ class FlowEntryActionSetField(FlowEntryAction):
     def get_set_field(self): return '%s - %s' % (self.set_field_key, self.set_field_value)
     set_field  = property(fget=get_set_field, fset=set_set_field)
 
+'''
+ TODO add the following actions, possibly in FlowEntryActionMod:
+              mod_dl_src:mac
+              mod_dl_dst:mac
+              mod_nw_src:ip
+              mod_nw_dst:ip
+              mod_tp_src:port
+              mod_tp_dst:port
+              mod_nw_tos:tos
+              mod_vlan_vid:vlan_vid
+              mod_vlan_pcp:vlan_pcp
+'''
+
+class FlowEntryActionMod(FlowEntryAction):
+    def __init__(self, action_str=''):
+        super(FlowEntryActionMod, self).__init__(action_str)
+        self._set_mod_key = self.action_str_key
+        self._set_mod_value = ''
+    def set_mod_dl_src(self, mac):   self._set_mod_value = mac
+    def set_mod_dl_dst(self, mac):   self._set_mod_value = mac
+    def set_mod_nw_src(self, ip):    self._set_mod_value = ip
+    def set_mod_nw_dst(self, ip):    self._set_mod_value = ip
+    def set_mod_tp_src(self, port):  self._set_mod_value = port
+    def set_mod_tp_dst(self, port):  self._set_mod_value = port
+    def set_mod_nw_tos(self, tos):   self._set_mod_value = tos
+    def set_mod_vlan_vid(self, vid): self._set_mod_value = vid
+    def set_mod_vlan_pcp(self, pcp): self._set_mod_value = pcp
+    def get_mod_dl_src(self):   return self._set_mod_value
+    def get_mod_dl_dst(self):   return self._set_mod_value
+    def get_mod_nw_src(self):   return self._set_mod_value
+    def get_mod_nw_dst(self):   return self._set_mod_value
+    def get_mod_tp_src(self):   return self._set_mod_value
+    def get_mod_tp_dst(self):   return self._set_mod_value
+    def get_mod_nw_tos(self):   return self._set_mod_value
+    def get_mod_vlan_vid(self): return self._set_mod_value
+    def get_mod_vlan_pcp(self): return self._set_mod_value
+    mod_dl_src    = property(fget=get_mod_dl_src,   fset=set_mod_dl_src)
+    mod_dl_dst    = property(fget=get_mod_dl_dst,   fset=set_mod_dl_dst)
+    mod_nw_src    = property(fget=get_mod_nw_src,   fset=set_mod_nw_src)
+    mod_nw_dst    = property(fget=get_mod_nw_dst,   fset=set_mod_nw_dst)
+    mod_tp_src    = property(fget=get_mod_tp_src,   fset=set_mod_tp_src)
+    mod_tp_dst    = property(fget=get_mod_tp_dst,   fset=set_mod_tp_dst)
+    mod_nw_tos    = property(fget=get_mod_nw_tos,   fset=set_mod_nw_tos)
+    mod_vlan_vid  = property(fget=get_mod_vlan_vid, fset=set_mod_vlan_vid)
+    mod_vlan_pcp  = property(fget=get_mod_vlan_pcp, fset=set_mod_vlan_pcp)
+
 #
 # Mod actions:
 #  mod_vlan_id, mod_vlan_pcp, mod_dl_src/dst, mod_nw_src/dst, mod_tp_src/dst, mod_nw_tos
