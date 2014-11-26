@@ -30,6 +30,9 @@ class FlowDebuggerMain(object):
         self._parser.add_option('--matched-only',
                                 action='store_true',
                                 help='Only display flow entries that have matched')
+        self._parser.add_option('-p', '--priority',
+                                action='store_true',
+                                help='Iterate the flow entries for a table based on priority, as opposed to alphabetically, Default: alphabetically')
         self._parser.add_option('-o', '--of',
                                 default='OpenFlow13',
                                 type=str,
@@ -69,12 +72,18 @@ class FlowDebuggerMain(object):
 
             flow_entry_fomatter = FlowEntryFormatter(options.verbose, options.multiline)
             for table in flow_entries.iter_tables():
-                # TODO add matched-only logic here
                 print "\nTable[%d] %d entries"%(table, flow_entries.num_table_entries(table))
-                for entry in flow_entries.iter_table_entries(table):
-                    if options.matched_only and entry.n_packets_ == 0:
-                        continue
-                    print flow_entry_fomatter.print_flow_entry(entry)
+                if options.priority:
+                    for (__, entry_list) in flow_entries.iter_table_priority_entries(table):
+                        for entry in entry_list:
+                            if options.matched_only and entry.n_packets_ == 0:
+                                continue
+                            print flow_entry_fomatter.print_flow_entry(entry)
+                else:
+                    for entry in flow_entries.iter_table_entries(table):
+                        if options.matched_only and entry.n_packets_ == 0:
+                            continue
+                        print flow_entry_fomatter.print_flow_entry(entry)
         else:
             #
             # GUI

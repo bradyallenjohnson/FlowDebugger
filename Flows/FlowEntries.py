@@ -40,6 +40,7 @@ class FlowEntryContainer(object):
     def __init__(self):
         self.flow_entries = []
         self.flow_entries_byTable = {}
+        self.flow_entries_byTablePriority = {}
 
     def __len__(self):
         return len(self.flow_entries)
@@ -63,6 +64,16 @@ class FlowEntryContainer(object):
         return iter(sorted(self.flow_entries_byTable[table]))
 
     #
+    # Return an iterable to iterate the entries for just one table, ordered by priority
+    # Usage:
+    #    for (prio, entry_list) in flow_entry_container.iter_table_priority_entries(table=3):
+    #        for entry in entry_list:
+    #            print 'Priority %d, Entry %s' % (prio, table_entry)
+    #
+    def iter_table_priority_entries(self, table):
+        return sorted(self.flow_entries_byTablePriority[table].iteritems())
+
+    #
     # Return an iterable to iterate just the tables
     # Usage:
     #    for table_num in flow_entry_container.iter_tables():
@@ -70,8 +81,6 @@ class FlowEntryContainer(object):
     #
     def iter_tables(self):
         return iter(sorted(self.flow_entries_byTable.iterkeys()))
-
-    # TODO need to be able to iterate based on the priority
 
     #
     # Iterate all entries, ordered by table. Used together with next()
@@ -111,6 +120,19 @@ class FlowEntryContainer(object):
         else:
             # append the entry to the existing table list
             flows_list.append(flow_entry)
+
+        # Store the entries by Table and Priority
+        flows_prio_table = self.flow_entries_byTablePriority.get(flow_entry.table_)
+        if flows_prio_table == None:
+            # the first entry for this table number
+            self.flow_entries_byTablePriority[flow_entry.table_] = {flow_entry.priority_ : [flow_entry]}
+        else:
+            priority_dict = flows_prio_table.get(flow_entry.priority_)
+            if priority_dict == None:
+                # the first entry in this table for this priority
+                flows_prio_table[flow_entry.priority_] = [flow_entry]
+            else:
+                priority_dict.append(flow_entry)
 
     def reset(self):
         del self.flow_entries[:]

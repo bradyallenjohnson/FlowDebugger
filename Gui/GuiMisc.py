@@ -7,7 +7,7 @@ Miscellaneous GUI classes used by the FlowDebuggerGui
 
 '''
 
-from Tkinter import Button, Checkbutton, Entry, Frame, IntVar, Label, Listbox, Scrollbar, StringVar
+from Tkinter import Button, Checkbutton, Entry, Frame, IntVar, Label, Listbox, OptionMenu, Scrollbar, StringVar
 from Tkconstants import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X, Y, YES
 import tkMessageBox
 
@@ -53,6 +53,39 @@ class LabelEntry(object):
     entry_text = property(fget=get_entry_text, fset=set_entry_text)
     label_text = property(fget=get_label_text, fset=set_label_text)
 
+class LabelOption(object):
+    def __init__(self, parent_frame, label_text, value, *values):
+        self._label_entry_frame = Frame(parent_frame)
+        self._label_entry_frame.pack(side=TOP, fill=X)
+
+        self._label_var = StringVar(value=label_text)
+        self._label = Label(self._label_entry_frame, textvariable=self._label_var, width=10, anchor=W, justify=LEFT)
+        self._label.config(text=label_text)
+        self._label.pack(side=LEFT)
+
+        self._option_default = value
+        self._option_var = StringVar(value=value)
+        self._option = OptionMenu(self._label_entry_frame, self._option_var, *values)
+        self._option.pack(side=LEFT, fill=X)
+
+    def clear_entry(self):
+        self.option_text = self._option_default
+
+    def set_label_text(self, text):
+        self._label_var.set(text)
+
+    def get_label_text(self):
+        return self._label_var.get()
+
+    def set_entry_choice(self, text):
+        self._option_var.set(text)
+
+    def get_entry_choice(self):
+        return self._option_var.get()
+
+    option_text = property(fget=get_entry_choice, fset=set_entry_choice)
+    label_text  = property(fget=get_label_text, fset=set_label_text)
+
 class Checked(object):
     def __init__(self, parent_frame, check_text, set_checked=False, on_check_callback=None, on_uncheck_callback=None):
         self._checked_value = IntVar(value=1 if set_checked else 0)
@@ -83,11 +116,12 @@ class Checked(object):
 
 class Buttons(object):
     # The buttons_dict should be a dictionary of the form: {'button text' : button_callback}
-    def __init__(self, parent_frame, buttons_dict):
+    # Use button_orientation=TOP to line them up vertically or LEFT to line them up horizontally
+    def __init__(self, parent_frame, buttons_dict, button_orientation=TOP):
         self._buttons = []
         for (name, callback) in buttons_dict.iteritems():
             button = Button(parent_frame, text=name, command=callback)
-            button.pack(side=TOP, fill=X, expand=NO, anchor=E)
+            button.pack(side=button_orientation, fill=X, expand=NO, anchor=E)
             self._buttons.append(button)
 
 class ScrolledList(object):
