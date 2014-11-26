@@ -70,7 +70,7 @@ class FlowDebuggerMain(object):
             flow_entries = DumpFlows.dump_flows(switch=switch, table=table, of_version=options.open_flow_version)
             print 'Displaying %d Flow entries' % (len(flow_entries))
 
-            flow_entry_fomatter = FlowEntryFormatter(options.verbose, options.multiline)
+            flow_entry_formatter = FlowEntryFormatter(options.verbose, options.multiline)
             for table in flow_entries.iter_tables():
                 print "\nTable[%d] %d entries"%(table, flow_entries.num_table_entries(table))
                 if options.priority:
@@ -78,15 +78,19 @@ class FlowDebuggerMain(object):
                         for entry in entry_list:
                             if options.matched_only and entry.n_packets_ == 0:
                                 continue
-                            print flow_entry_fomatter.print_flow_entry(entry)
+                            print flow_entry_formatter.print_flow_entry(entry)
                 else:
                     for entry in flow_entries.iter_table_entries(table):
                         if options.matched_only and entry.n_packets_ == 0:
                             continue
-                        print flow_entry_fomatter.print_flow_entry(entry)
+                        print flow_entry_formatter.print_flow_entry(entry)
         else:
             #
             # GUI
             #
-            gui = FlowDebuggerGui(switch, table, options.open_flow_version, check_pkts=options.verbose, check_matched=options.matched_only)
+            gui = FlowDebuggerGui(switch, table,
+                                  options.open_flow_version,
+                                  check_pkts=options.verbose,
+                                  check_matched=options.matched_only,
+                                  sort_by_priority=options.priority)
             gui.run()

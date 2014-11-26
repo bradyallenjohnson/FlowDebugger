@@ -7,24 +7,34 @@ Miscellaneous GUI classes used by the FlowDebuggerGui
 
 '''
 
-from Tkinter import Button, Checkbutton, Entry, Frame, IntVar, Label, Listbox, OptionMenu, Scrollbar, StringVar
+from Tkinter import Button, Checkbutton, Entry, Frame, IntVar, Label, Listbox, OptionMenu, Radiobutton, Scrollbar, StringVar
 from Tkconstants import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X, Y, YES
 import tkMessageBox
 
-class LabelEntry(object):
-    def __init__(self, parent_frame, label_text, entry_text='', on_input_callable=None):
-        self._on_input_callback = on_input_callable
-
-        self._label_entry_frame = Frame(parent_frame)
-        self._label_entry_frame.pack(side=TOP)
+class LabelBase(object):
+    def __init__(self, parent_frame, label_text):
+        self._label_frame = Frame(parent_frame)
+        self._label_frame.pack(side=TOP)
 
         self._label_var = StringVar(value=label_text)
-        self._label = Label(self._label_entry_frame, textvariable=self._label_var, width=10, anchor=W, justify=LEFT)
+        self._label = Label(self._label_frame, textvariable=self._label_var, width=10, anchor=W, justify=LEFT)
         self._label.config(text=label_text)
         self._label.pack(side=LEFT)
 
+    def set_label_text(self, text):
+        self._label_var.set(text)
+
+    def get_label_text(self):
+        return self._label_var.get()
+    label_text = property(fget=get_label_text, fset=set_label_text)
+
+class LabelEntry(LabelBase):
+    def __init__(self, parent_frame, label_text, entry_text='', on_input_callable=None):
+        super(LabelEntry, self).__init__(parent_frame, label_text)
+        self._on_input_callback = on_input_callable
+
         self._entry_var = StringVar(value=entry_text)
-        self._entry = Entry(self._label_entry_frame, bd=3, textvariable=self._entry_var)
+        self._entry = Entry(self._label_frame, bd=3, textvariable=self._entry_var)
         self._entry.bind('<Return>', self._entry_input)
         self._entry.pack(side=RIGHT)
 
@@ -38,12 +48,6 @@ class LabelEntry(object):
     def clear_entry(self):
         self.entry_text = ''
 
-    def set_label_text(self, text):
-        self._label_var.set(text)
-
-    def get_label_text(self):
-        return self._label_var.get()
-
     def set_entry_text(self, text):
         self._entry_var.set(text)
 
@@ -51,31 +55,18 @@ class LabelEntry(object):
         return self._entry_var.get()
 
     entry_text = property(fget=get_entry_text, fset=set_entry_text)
-    label_text = property(fget=get_label_text, fset=set_label_text)
 
-class LabelOption(object):
+class LabelOption(LabelBase):
     def __init__(self, parent_frame, label_text, value, *values):
-        self._label_entry_frame = Frame(parent_frame)
-        self._label_entry_frame.pack(side=TOP, fill=X)
-
-        self._label_var = StringVar(value=label_text)
-        self._label = Label(self._label_entry_frame, textvariable=self._label_var, width=10, anchor=W, justify=LEFT)
-        self._label.config(text=label_text)
-        self._label.pack(side=LEFT)
+        super(LabelOption, self).__init__(parent_frame, label_text)
 
         self._option_default = value
         self._option_var = StringVar(value=value)
-        self._option = OptionMenu(self._label_entry_frame, self._option_var, *values)
+        self._option = OptionMenu(self._label_frame, self._option_var, *values)
         self._option.pack(side=LEFT, fill=X)
 
     def clear_entry(self):
         self.option_text = self._option_default
-
-    def set_label_text(self, text):
-        self._label_var.set(text)
-
-    def get_label_text(self):
-        return self._label_var.get()
 
     def set_entry_choice(self, text):
         self._option_var.set(text)
@@ -84,7 +75,45 @@ class LabelOption(object):
         return self._option_var.get()
 
     option_text = property(fget=get_entry_choice, fset=set_entry_choice)
-    label_text  = property(fget=get_label_text, fset=set_label_text)
+
+class LabelRadio(LabelBase):
+    def __init__(self, parent_frame, label_text, radio_list):
+        super(LabelRadio, self).__init__(parent_frame, label_text)
+
+        self._option_default = radio_list[0]
+        self._radio_var = StringVar()
+        for v in radio_list:
+            Radiobutton(self._label_frame, variable=self._radio_var, text=v, value=v).pack(side=LEFT, fill=X, expand=Y)
+            #Radiobutton(self._label_frame, variable=self._radio_var, value=v, text=v).pack(fill=X, expand=Y)
+        self._radio_var.set(radio_list[0])
+
+    def clear_entry(self):
+        self.radio_text = self._option_default
+
+    def set_radio_choice(self, text):
+        self._option_var.set(text)
+
+    def get_radio_choice(self):
+        return self._option_var.get()
+
+    radio_text = property(fget=get_radio_choice, fset=set_radio_choice)
+
+class Radios(object):
+    def __init__(self, parent_frame, radio_value_list, text_prefix = '', text_suffix='', orientation=TOP):
+        self._option_default = radio_value_list[0]
+        self._radio_var = StringVar(value=radio_value_list[0])
+        for v in radio_value_list:
+            Radiobutton(parent_frame, variable=self._radio_var, text='%s%s%s' % (text_prefix, v, text_suffix), value=v).pack(side=orientation, anchor=W)
+    def clear_entry(self):
+        self.radio_value = self._option_default
+
+    def set_radio(self, text):
+        self._radio_var.set(text)
+
+    def get_radio(self):
+        return self._radio_var.get()
+
+    radio_value = property(fget=get_radio, fset=set_radio)
 
 class Checked(object):
     def __init__(self, parent_frame, check_text, set_checked=False, on_check_callback=None, on_uncheck_callback=None):

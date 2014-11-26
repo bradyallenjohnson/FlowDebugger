@@ -9,13 +9,13 @@ from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, RIGHT, TOP, W, X, YES
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
-from Gui.GuiMisc import Buttons, Checked, LabelEntry, Popup, ScrolledList
+from Gui.GuiMisc import Buttons, Checked, LabelEntry, Popup, Radios, ScrolledList
 from Gui.TraceGui import TraceGui
 
 class FlowDebuggerGui(object):
 
     # flow_entries is an instance of FlowEntries.FlowEntryContainer
-    def __init__(self, switch, table, of_version, check_cookie=False, check_pkts=False, check_duration=False, check_matched=False):
+    def __init__(self, switch, table, of_version, check_cookie=False, check_pkts=False, check_duration=False, check_matched=False, sort_by_priority=False):
         self._first_refresh = True
         self._root = Tk()
         self._root.title('Flow Debugger')
@@ -35,13 +35,17 @@ class FlowDebuggerGui(object):
 
         # The info to display
         # TODO move these to a "View" pull-down menu
-        # TODO order by either priority or alphabetical
         checks_frame = Frame(self._top_frame)
         checks_frame.pack(side=LEFT, anchor=W, padx=5)
         self._check_pkts         = Checked(checks_frame, 'show Pkts/Bytes',   set_checked=check_pkts)
         self._check_duration     = Checked(checks_frame, 'show duration',     set_checked=check_duration)
         self._check_cookie       = Checked(checks_frame, 'show cookie',       set_checked=check_cookie)
         self._check_matched_only = Checked(checks_frame, 'show matched only', set_checked=check_matched)
+        #self._radio_sort         = LabelRadio(checks_frame, 'sort by', ['priority', 'match string'])
+        radio_vals = ['priority', 'match string']
+        self._radio_sort = Radios(checks_frame, radio_vals, text_prefix='sort by ')
+        if not sort_by_priority:
+            self._radio_sort.radio_value = radio_vals[1]
 
         self._trace_gui = TraceGui(self._trace_callback)
 
@@ -84,10 +88,17 @@ class FlowDebuggerGui(object):
             num_table_entries = flow_entries.num_table_entries(table)
             self._list.append_list_entry('')
             self._list.append_list_entry('Table[%d] %d entr%s' % (table, num_table_entries, 'y' if num_table_entries==1 else 'ies'), fg='red')
-            for entry in flow_entries.iter_table_entries(table):
-                if self._check_matched_only.checked and entry.n_packets_ == 0:
-                    continue
-                self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
+            if self._radio_sort.radio_value == 'priority':
+                for (__, entry_list) in flow_entries.iter_table_priority_entries(table):
+                    for entry in entry_list:
+                        if self._check_matched_only.checked and entry.n_packets_ == 0:
+                            continue
+                        self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
+            else:
+                for entry in flow_entries.iter_table_entries(table):
+                    if self._check_matched_only.checked and entry.n_packets_ == 0:
+                        continue
+                    self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
 
     def _trace_callback(self):
         Popup('Tracing is not implemented yet')
