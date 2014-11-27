@@ -9,7 +9,7 @@ from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
-from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, Popup, Radios, ScrolledList
+from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
 from Gui.TraceGui import TraceGui
 
 class FlowDebuggerGui(object):
@@ -28,10 +28,10 @@ class FlowDebuggerGui(object):
         # The text labels
         label_entry_frame = Frame(self._top_frame)
         label_entry_frame.pack(side=LEFT, anchor=W, padx=5)
-        self._host_label   = LabelEntry(label_entry_frame, 'Host',       'localhost')
-        self._ofver_label  = LabelEntry(label_entry_frame, 'OF version', of_version) # TODO Make this a pull-down choice of OpenFlow11 or OpenFlow13
-        self._switch_label = LabelEntry(label_entry_frame, 'Switch',     switch)
-        self._table_label  = LabelEntry(label_entry_frame, 'Table',      table)
+        self._host_label   = LabelEntry(label_entry_frame,  'Host',       'localhost')
+        self._switch_label = LabelEntry(label_entry_frame,  'Switch',     switch)
+        self._table_label  = LabelEntry(label_entry_frame,  'Table',      table)
+        self._ofver_label  = LabelOption(label_entry_frame, 'OF version', of_version, 'OpenFlow11', 'OpenFlow13')
 
         # The info to display
         # TODO move these to a "View" pull-down menu
@@ -53,6 +53,7 @@ class FlowDebuggerGui(object):
         if not sort_by_priority:
             self._radio_sort.radio_value = radio_vals[1]
 
+        # Create the Trace GUI window, but only show it when the trace button is pressed
         self._trace_gui = TraceGui(self._trace_callback)
 
         # the buttons
@@ -82,9 +83,14 @@ class FlowDebuggerGui(object):
                 Popup('Nothing to refresh\n\'Switch\' is empty')
             return
 
+        if self._host_label.entry_text != 'localhost':
+            Popup('Remote hosts arent supported yet\nOnly \'localhost\' is supported')
+            return
+            
         flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
                                             table=self._table_label.entry_text,
                                             of_version=self._ofver_label.entry_text)
+
         flow_entry_formatter = FlowEntryFormatter()
         flow_entry_formatter.show_cookie        =  self._check_cookie.checked
         flow_entry_formatter.show_duration      =  self._check_duration.checked

@@ -17,7 +17,7 @@ class TraceGui(object):
 
         self._root = Toplevel()
         self._root.title('FlowEntry Trace')
-        #self._root.minsize(width=350, height=350)
+        self._root.minsize(width=300, height=350)
         #self._root.geometry('%dx%d+%d+%d'%(900, 700, 120, 120)) # widthxheight+x+y
 
         self._top_frame = Frame(self._root)

@@ -35,9 +35,10 @@ class FlowDebuggerMain(object):
                                 help='Iterate the flow entries for a table based on priority, as opposed to alphabetically, Default: alphabetically')
         self._parser.add_option('-o', '--of',
                                 default='OpenFlow13',
-                                type=str,
+                                type='choice',
+                                choices=['OpenFlow11', 'OpenFlow13'],
                                 dest='open_flow_version',
-                                help='Specify the OpenFlow version [OpenFlow11 | OpenFlow13], default: OpenFlow13')
+                                help='Specify the OpenFlow version [OpenFlow11, OpenFlow13], Default: OpenFlow13')
 
     def main(self):
         (options, args) = self._parser.parse_args()

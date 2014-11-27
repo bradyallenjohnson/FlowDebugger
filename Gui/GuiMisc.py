@@ -12,9 +12,9 @@ from Tkconstants import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X
 import tkMessageBox
 
 class LabelBase(object):
-    def __init__(self, parent_frame, label_text, side=TOP, anchor=W, width=10):
+    def __init__(self, parent_frame, label_text, side=TOP, anchor=W, width=10, expand=NO):
         self._label_frame = Frame(parent_frame)
-        self._label_frame.pack(side=side)
+        self._label_frame.pack(side=side, expand=expand, anchor=anchor)
 
         self._label_var = StringVar(value=label_text)
         self._label = Label(self._label_frame, textvariable=self._label_var, width=width, anchor=anchor, justify=LEFT)
@@ -63,7 +63,8 @@ class LabelOption(LabelBase):
         self._option_default = value
         self._option_var = StringVar(value=value)
         self._option = OptionMenu(self._label_frame, self._option_var, *values)
-        self._option.pack(side=LEFT, fill=X)
+        #self._option.pack(side=LEFT, fill=X)
+        self._option.pack(side=RIGHT, fill=X, anchor=E)
 
     def clear_entry(self):
         self.entry_text = self._option_default
