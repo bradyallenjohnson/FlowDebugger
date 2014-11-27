@@ -7,7 +7,8 @@ Created on Nov 26, 2014
 from collections import OrderedDict
 from Tkinter import Frame, Toplevel
 from Tkconstants import BOTTOM, LEFT, S, TOP, W, X
-from Gui.GuiMisc import Buttons, LabelEntry, LabelOption, Popup
+from Gui.GuiMisc import Buttons, LabelEntry, LabelOption
+from Flows.FlowEntryFactory import FlowEntryFactory
 
 class TraceGui(object):
 
@@ -22,15 +23,19 @@ class TraceGui(object):
         self._top_frame = Frame(self._root)
         self._top_frame.pack(side=TOP, fill=X, padx=10, pady=10)
 
+        # TODO for now these label names have to be exactly the same as the FlowEntryMatch object properties
+        #      consider either using the property values, or setting the FlowEntryMatch objects in _trace_callback()
+        #      differently. This way is kind-of a hack
+
         # The text labels
         label_entry_frame = Frame(self._top_frame)
         label_entry_frame.pack(side=TOP, anchor=W, pady=5)
-        self._in_port_label   = LabelEntry(label_entry_frame,  'inport')
-        self._dl_src_label    = LabelEntry(label_entry_frame,  'dl_src')
-        self._dl_dst_label    = LabelEntry(label_entry_frame,  'dl_dst')
+        self._in_port_label   = LabelEntry(label_entry_frame,  'in_port')
+        self._dl_src_label    = LabelEntry(label_entry_frame,  'mac_src')
+        self._dl_dst_label    = LabelEntry(label_entry_frame,  'mac_dst')
         self._dl_type_label   = LabelOption(label_entry_frame, 'dl_type', 'empty', 'empty', 'ARP', 'IP', 'RARP')
-        self._vlan_vid_label  = LabelEntry(label_entry_frame,  'vlan_vid')
-        self._vlan_pcp_label  = LabelEntry(label_entry_frame,  'vlan_pcp')
+        self._vlan_vid_label  = LabelEntry(label_entry_frame,  'dl_vlan')
+        self._vlan_pcp_label  = LabelEntry(label_entry_frame,  'dl_vlan_pcp')
         self._nw_src_label    = LabelEntry(label_entry_frame,  'nw_src')
         self._nw_dst_label    = LabelEntry(label_entry_frame,  'nw_dst')
         self._nw_tos_label    = LabelEntry(label_entry_frame,  'nw_tos')
@@ -38,7 +43,8 @@ class TraceGui(object):
         self._tp_src_label    = LabelEntry(label_entry_frame,  'tp_src')
         self._tp_dst_label    = LabelEntry(label_entry_frame,  'tp_dst')
         # This list is used when clearing the label entries
-        self._label_entries = [self._dl_src_label, self._dl_dst_label, self._dl_type_label,
+        self._label_entries = [self._in_port_label,
+                               self._dl_src_label, self._dl_dst_label, self._dl_type_label,
                                self._vlan_vid_label, self._vlan_pcp_label,
                                self._nw_src_label, self._nw_dst_label, self._nw_tos_label, self._nw_proto_label,
                                self._tp_src_label, self._tp_dst_label]
@@ -54,7 +60,11 @@ class TraceGui(object):
 
     def _trace_callback(self):
         # TODO populate a FlowEntry with a list of fields 
-        self._root_trace_callback()
+        match_obj_list = []
+        for label_entry in self._label_entries:
+            if len(label_entry.entry_text) > 0 and label_entry.entry_text != 'empty':
+                match_obj_list.append(FlowEntryFactory.get_match_object(label_entry.label_text, label_entry.entry_text))
+        self._root_trace_callback(match_obj_list)
 
     def _reset_callback(self):
         # Reset all of the fields

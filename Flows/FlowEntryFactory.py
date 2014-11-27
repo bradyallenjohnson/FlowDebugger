@@ -114,7 +114,8 @@ class FlowEntryFactory(object):
         flow_entry.action_str_list_ =  flow_entry.raw_actions_.split(',')
         flow_entry.match_str_list_  =  flow_entry.raw_match_.split(',')
         if flow_entry.match_str_list_[0].startswith('priority='):
-            flow_entry.priority_        =  int(flow_entry.match_str_list_[0].split('=')[1])
+            flow_entry.priority_  =  int(flow_entry.match_str_list_[0].split('=')[1])
+            flow_entry.match_str_list_.pop(0) # Remove the priority from the match list
 
         # Parse each match string into a match object, skip the first element which is priority
         for match_str in flow_entry.match_str_list_[1:]:
@@ -124,3 +125,19 @@ class FlowEntryFactory(object):
             flow_entry.action_object_list_.append(FlowEntryFactory._parse_action(action_str))
 
         return flow_entry
+
+    @staticmethod
+    def get_match_object(key, value):
+        if not FlowEntryFactory._flow_match_initialized:
+            FlowEntryFactory._init_flow_match_dict()
+
+        parser_obj_list = FlowEntryFactory._flow_match_setters.get(key, None)
+        if parser_obj_list == None:
+            print 'Cant get match Object'
+            return None
+
+        obj = parser_obj_list[0]()      # instantiate the object
+        if parser_obj_list[1] != None:  # call the property setter, if there is one
+            parser_obj_list[1](obj, value)
+
+        return obj

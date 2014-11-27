@@ -70,6 +70,8 @@ class FlowEntryContainer(object):
     #        for entry in entry_list:
     #            print 'Priority %d, Entry %s' % (prio, table_entry)
     #
+    # TODO it would be nice/cleaner to be able to iterate the priorities with one for loop instead of 2
+    #
     def iter_table_priority_entries(self, table):
         return sorted(self.flow_entries_byTablePriority[table].iteritems())
 
@@ -146,6 +148,7 @@ class FlowEntryFormatter(object):
         self._show_cookie = False
         self._show_packets_bytes = False
         self._show_duration = False
+        self._show_priority = False
         self._verbose = verbose
         if verbose:
             self._show_packets_bytes = True
@@ -153,24 +156,31 @@ class FlowEntryFormatter(object):
     def get_show_cookie(self):        return self._show_cookie
     def get_show_packets_bytes(self): return self._show_packets_bytes
     def get_show_duration(self):      return self._show_duration
-    def get_verbose(self):            return self._verbose or self._show_packets_bytes
+    def get_show_priority(self):      return self._show_priority
+    def get_verbose(self):            return self._verbose or (self._show_packets_bytes and self._show_priority and self._show_cookie and self._show_duration)
     def set_show_cookie(self, show):         self._show_cookie = show
     def set_show_packets_bytes(self, show):  self._show_packets_bytes = show
     def set_show_duration(self, show):       self._show_duration = show
-    def set_verbose(self, show):             self._verbose = self._show_packets_bytes = show
+    def set_show_priority(self, show):       self._show_priority = show
+    def set_verbose(self, show):             self._verbose = self._show_packets_bytes = self._show_priority = self._show_cookie = self._show_duration = show
     show_cookie = property(fset=set_show_cookie, fget=get_show_cookie)
     show_packets_bytes = property(fset=set_show_packets_bytes, fget=get_show_packets_bytes)
     show_duration = property(fset=set_show_duration, fget=get_show_duration)
+    show_priority = property(fset=set_show_priority, fget=get_show_priority)
     show_verbose = property(fset=set_verbose, fget=get_verbose)
 
     def print_flow_entry(self, flow_entry):
         outstr_list = []
         if self._verbose:
-            outstr_list.append('Table=%d, Priority=%s, n_packets=%d, n_bytes=%d ' % (flow_entry.table_, flow_entry.priority_, flow_entry.n_packets_, flow_entry.n_bytes_))
+            outstr_list.append('Table=%d ' % (flow_entry.table_))
+        if self._show_priority:
+            outstr_list.append('Priority=%s '%flow_entry.priority_)
         if self._show_cookie:
             outstr_list.append('Cookie=%s '%flow_entry.cookie_)
         if self._show_duration:
             outstr_list.append('Duration=%s '%flow_entry.duration_)
+        if self._show_packets_bytes:
+            outstr_list.append('n_packets=%d, n_bytes=%d ' % (flow_entry.n_packets_, flow_entry.n_bytes_))
 
         if self._multiline:
             outstr_list.append('\nMatches(%d)'%len(flow_entry.match_object_list_))
@@ -182,5 +192,6 @@ class FlowEntryFormatter(object):
 
             return '\n%s'%''.join(outstr_list)
         else:
-            outstr_list.append('Matches(%d)[%s] Actions(%d)[%s]' % (len(flow_entry.match_str_list_), flow_entry.raw_match_, len(flow_entry.action_str_list_), flow_entry.raw_actions_))
+            outstr_list.append('Matches(%d)[%s] Actions(%d)[%s]' % (len(flow_entry.match_str_list_),  ', '.join(flow_entry.match_str_list_),
+                                                                    len(flow_entry.action_str_list_), ', '.join(flow_entry.action_str_list_)))
             return '%s'%''.join(outstr_list)

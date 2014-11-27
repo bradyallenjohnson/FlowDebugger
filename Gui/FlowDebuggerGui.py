@@ -6,16 +6,16 @@ Created on Nov 20, 2014
 
 from collections import OrderedDict
 from Tkinter import Tk, Frame
-from Tkconstants import BOTH, BOTTOM, E, LEFT, RIGHT, TOP, W, X, YES
+from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
-from Gui.GuiMisc import Buttons, Checked, LabelEntry, Popup, Radios, ScrolledList
+from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, Popup, Radios, ScrolledList
 from Gui.TraceGui import TraceGui
 
 class FlowDebuggerGui(object):
 
     # flow_entries is an instance of FlowEntries.FlowEntryContainer
-    def __init__(self, switch, table, of_version, check_cookie=False, check_pkts=False, check_duration=False, check_matched=False, sort_by_priority=False):
+    def __init__(self, switch, table, of_version, check_cookie=False, check_pkts=False, check_duration=False, check_priority=False, check_matched=False, sort_by_priority=False):
         self._first_refresh = True
         self._root = Tk()
         self._root.title('Flow Debugger')
@@ -39,11 +39,17 @@ class FlowDebuggerGui(object):
         checks_frame.pack(side=LEFT, anchor=W, padx=5)
         self._check_pkts         = Checked(checks_frame, 'show Pkts/Bytes',   set_checked=check_pkts)
         self._check_duration     = Checked(checks_frame, 'show duration',     set_checked=check_duration)
+        self._check_priority     = Checked(checks_frame, 'show priority',     set_checked=check_priority)
         self._check_cookie       = Checked(checks_frame, 'show cookie',       set_checked=check_cookie)
         self._check_matched_only = Checked(checks_frame, 'show matched only', set_checked=check_matched)
         #self._radio_sort         = LabelRadio(checks_frame, 'sort by', ['priority', 'match string'])
+        
+        # Sorting
+        sort_frame = Frame(self._top_frame)
+        sort_frame.pack(side=LEFT, anchor=N, padx=5)
+        self._sort_label = LabelBase(sort_frame, 'Sort FlowEntries', width=18)
         radio_vals = ['priority', 'match string']
-        self._radio_sort = Radios(checks_frame, radio_vals, text_prefix='sort by ')
+        self._radio_sort = Radios(sort_frame, radio_vals, text_prefix='by ')
         if not sort_by_priority:
             self._radio_sort.radio_value = radio_vals[1]
 
@@ -79,10 +85,14 @@ class FlowDebuggerGui(object):
         flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
                                             table=self._table_label.entry_text,
                                             of_version=self._ofver_label.entry_text)
-        flow_entry_formatter = FlowEntryFormatter(verbose=self._check_pkts.checked)
-        flow_entry_formatter.show_cookie = self._check_cookie.checked
-        flow_entry_formatter.show_duration = self._check_duration.checked
-        flow_entry_formatter.show_packets_bytes = self._check_pkts
+        flow_entry_formatter = FlowEntryFormatter()
+        flow_entry_formatter.show_cookie        =  self._check_cookie.checked
+        flow_entry_formatter.show_duration      =  self._check_duration.checked
+        flow_entry_formatter.show_priority      =  self._check_priority.checked
+        flow_entry_formatter.show_packets_bytes =  self._check_pkts.checked
+
+        # First display the total number of entries
+        self._list.append_list_entry('Total Flow entries: %d' % (len(flow_entries)), fg='red')
 
         for table in flow_entries.iter_tables():
             num_table_entries = flow_entries.num_table_entries(table)
@@ -100,5 +110,7 @@ class FlowDebuggerGui(object):
                         continue
                     self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
 
-    def _trace_callback(self):
+    def _trace_callback(self, match_obj_list):
+        for obj in match_obj_list:
+            print obj
         Popup('Tracing is not implemented yet')

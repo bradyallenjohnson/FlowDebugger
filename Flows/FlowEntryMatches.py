@@ -88,7 +88,7 @@ class FlowEntryMatchLayer2(FlowEntryMatches):
         self._mac_src = None
         self._mac_dst = None
         self._protocol_layer3 = ''
-        self._dl_type = ''
+        self._dl_type = None
         self._ethertypes = {'0x0800' : 'IP', '0x0806' : 'ARP', '0x8035' : 'RARP'}
         self._dl_vlan = None     # VLAN tag
         self._dl_vlan_pcp = None # VLAN Priority Code Point
@@ -123,6 +123,7 @@ class FlowEntryMatchLayer3(FlowEntryMatches):
         super(FlowEntryMatchLayer3, self).__init__(match_str, 'L3')
         self._nw_src = None
         self._nw_dst = None
+        self._nw_tos = None
         self._protocol_layer4 = ''
         self._nw_proto = 0
         self._nw_protos = {'1' : 'ICMP', '6' : 'TCP', '17' : 'UDP', '132' : 'SCTP'}
@@ -134,14 +135,17 @@ class FlowEntryMatchLayer3(FlowEntryMatches):
     def set_nw_proto(self, nw_proto): (self._nw_proto, self._protocol_layer4) = (nw_proto, self._nw_protos.get(nw_proto, 'UNKNOWN'))
     def set_nw_src(self, nw_src): self._nw_src = nw_src
     def set_nw_dst(self, nw_dst): self._nw_dst = nw_dst
+    def set_nw_tos(self, tos): self._nw_tos = tos
     def get_nw_proto(self): return self._nw_proto
     def get_nw_src(self): return self._nw_src
     def get_nw_dst(self): return self._nw_dst
+    def get_nw_tos(self): return self._nw_tos
     tcp      = property(fset=set_tcp)
     udp      = property(fset=set_udp)
     nw_proto = property(fget=get_nw_proto, fset=set_nw_proto)
     nw_src   = property(fget=get_nw_src, fset=set_nw_src)
     nw_dst   = property(fget=get_nw_dst, fset=set_nw_dst)
+    nw_tos   = property(fget=get_nw_tos, fset=set_nw_tos)
 
 #
 # TCP, UDP

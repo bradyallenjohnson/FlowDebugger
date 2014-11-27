@@ -12,12 +12,12 @@ from Tkconstants import BOTH, BOTTOM, E, END, LEFT, NO, RIGHT, SUNKEN, TOP, W, X
 import tkMessageBox
 
 class LabelBase(object):
-    def __init__(self, parent_frame, label_text):
+    def __init__(self, parent_frame, label_text, side=TOP, anchor=W, width=10):
         self._label_frame = Frame(parent_frame)
-        self._label_frame.pack(side=TOP)
+        self._label_frame.pack(side=side)
 
         self._label_var = StringVar(value=label_text)
-        self._label = Label(self._label_frame, textvariable=self._label_var, width=10, anchor=W, justify=LEFT)
+        self._label = Label(self._label_frame, textvariable=self._label_var, width=width, anchor=anchor, justify=LEFT)
         self._label.config(text=label_text)
         self._label.pack(side=LEFT)
 
@@ -66,7 +66,7 @@ class LabelOption(LabelBase):
         self._option.pack(side=LEFT, fill=X)
 
     def clear_entry(self):
-        self.option_text = self._option_default
+        self.entry_text = self._option_default
 
     def set_entry_choice(self, text):
         self._option_var.set(text)
@@ -74,7 +74,7 @@ class LabelOption(LabelBase):
     def get_entry_choice(self):
         return self._option_var.get()
 
-    option_text = property(fget=get_entry_choice, fset=set_entry_choice)
+    entry_text = property(fget=get_entry_choice, fset=set_entry_choice)
 
 class LabelRadio(LabelBase):
     def __init__(self, parent_frame, label_text, radio_list):
@@ -126,11 +126,11 @@ class Checked(object):
 
     def _on_check(self):
         if self._checked_value.get() == 1:
-            print '%s Checked' % self._check_text
+            #print '%s Checked' % self._check_text
             if self._on_check_callback != None:
                 self._on_check_callback()
         else:
-            print '%s Un-hecked' % self._check_text
+            #print '%s Un-hecked' % self._check_text
             if self._on_uncheck_callback != None:
                 self._on_uncheck_callback()
 
