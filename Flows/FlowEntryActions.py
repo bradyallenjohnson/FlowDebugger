@@ -18,7 +18,8 @@ import inspect
 # To print a particular FlowEntryMatches, the __str__() built-in function has been
 # overridden to print all properties using the property fget function. This way, we
 # dont need __str__() functions in all the derived classes.
-#  
+#
+
 
 #
 # Base class for FlowEntry Actions
@@ -82,19 +83,21 @@ class FlowEntryActionSwitchPort(FlowEntryAction):
         self._in_port = False  # Output the packet to the port it was received on
         self._local   = False  # Output the packet to the "local port"
         self._output_port = None  # Port to output the packet to
+        self._output_type = 'Unknown'
         self._packet_in = False
         self._controller_id = 0
         self._packet_in_size = 0
         self._packet_in_reason = 0
 
-    def set_drop(self, empty):    self._drop    = True
-    def set_normal(self, empty):  self._normal  = True
-    def set_all(self, empty):     self._all     = True
-    def set_flood(self, empty):   self._flood   = True
-    def set_in_port(self, empty): self._in_port = True
-    def set_local(self, empty):   self._loacl   = True
-    def set_output(self, output_port): self._output_port = output_port
+    def set_drop(self, empty):         (self._output_type, self._drop)    = ('Drop', True)
+    def set_normal(self, empty):       (self._output_type, self._normal)  = ('Normal', True)
+    def set_all(self, empty):          (self._output_type, self._all)     = ('All', True)
+    def set_flood(self, empty):        (self._output_type, self._flood)   = ('Flood', True)
+    def set_in_port(self, empty):      (self._output_type, self._in_port) = ('InPort', True)
+    def set_local(self, empty):        (self._output_type, self._loacl)   = ('Local', True)
+    def set_output(self, output_port): (self._output_type, self._output_port) = ('Port', output_port)
     def set_controller(self, controller_str):
+        self._output_type = 'Controller'
         self._packet_in = True
         # 2 forms for controller_str:
         #    controller(key=value...)
@@ -114,14 +117,17 @@ class FlowEntryActionSwitchPort(FlowEntryAction):
                 else:
                     print 'Unknown controller options: %s' % pair
     def get_output(self): return self._output_port
-    drop       = property(fset=set_drop)
-    normal     = property(fset=set_normal)
-    all        = property(fset=set_all)
-    flood      = property(fset=set_flood)
-    in_port    = property(fset=set_in_port)
-    local      = property(fset=set_local)
-    output     = property(fget=get_output, fset=set_output)
-    controller = property(fset=set_controller)
+    def get_output_type(self): return self._output_type
+    def get_drop(self): return self._drop
+    drop        = property(fset=set_drop, fget=get_drop)
+    normal      = property(fset=set_normal)
+    all         = property(fset=set_all)
+    flood       = property(fset=set_flood)
+    in_port     = property(fset=set_in_port)
+    local       = property(fset=set_local)
+    output      = property(fget=get_output, fset=set_output)
+    output_type = property(fget=get_output_type)
+    controller  = property(fset=set_controller)
 
 
 #
@@ -139,19 +145,8 @@ class FlowEntryActionSetField(FlowEntryAction):
     def get_set_field(self): return '%s - %s' % (self.set_field_key, self.set_field_value)
     set_field  = property(fget=get_set_field, fset=set_set_field)
 
-'''
- TODO add the following actions, possibly in FlowEntryActionMod:
-              mod_dl_src:mac
-              mod_dl_dst:mac
-              mod_nw_src:ip
-              mod_nw_dst:ip
-              mod_tp_src:port
-              mod_tp_dst:port
-              mod_nw_tos:tos
-              mod_vlan_vid:vlan_vid
-              mod_vlan_pcp:vlan_pcp
-'''
-
+# TODO consider converting the FlowEntryActionMod class into FlowEntryActionSetField class
+#      All you need to do is remove the "mod_" string from the _set_mod_key, and they're the same
 class FlowEntryActionMod(FlowEntryAction):
     def __init__(self, action_str=''):
         super(FlowEntryActionMod, self).__init__(action_str)

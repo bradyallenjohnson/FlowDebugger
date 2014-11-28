@@ -47,10 +47,21 @@ class FlowEntryMatches(object):
                     str_list.append('%s = %s' % (attr[0], value))
         return ', '.join(str_list)
 
-    # abstract base class
-    def match(self, packet_str):
-        raise NotImplementedError
+    def match(self, match):
+        if type(self) != type(match):
+            print 'FlowEntryMatches.match() False: %s != %s' % (type(self), type(match))
+            return False
 
+        attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
+        for attr in attributes:
+            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget != None:
+                if not hasattr(match, attr[0]):
+                    print 'FlowEntryMatches.match() False, %s does not have attr %s' % (type(match), attr[0])
+                    return False
+                if attr[1].fget(self) != attr[1].fget(match):
+                    print 'FlowEntryMatches.match() False, %s values not equal: self [%s] match [%s]' % (attr[0], attr[1].fget(self), attr[1].fget(match))
+                    return False
+        return True
 #
 # OpenFlow Switch matching
 # TODO should metadata be included here
@@ -76,25 +87,24 @@ class FlowEntryMatchSwitch(FlowEntryMatches):
     out_port = property(fget=get_outport, fset=set_outport)
     metadata = property(fget=get_metadata, fset=set_metadata)
 
-    def match(self, packet_str):
-        raise NotImplementedError
-
 #
 # Ethernet
 #
 class FlowEntryMatchLayer2(FlowEntryMatches):
+    _ethertypes = {'0x0800' : 'IP', '0x0806' : 'ARP', '0x8035' : 'RARP'}
+    _protocols  = {'IP' : '0x0800', 'ARP' : '0x0806', 'RARP' : '0x8035'}
+
     def __init__(self, match_str=''):
         super(FlowEntryMatchLayer2, self).__init__(match_str, 'ETHERNET')
-        self._mac_src = None
-        self._mac_dst = None
+        self._dl_src = None
+        self._dl_dst = None
         self._protocol_layer3 = ''
         self._dl_type = None
-        self._ethertypes = {'0x0800' : 'IP', '0x0806' : 'ARP', '0x8035' : 'RARP'}
         self._dl_vlan = None     # VLAN tag
         self._dl_vlan_pcp = None # VLAN Priority Code Point
 
-    def set_mac_src(self, mac_src): self._mac_src = mac_src
-    def set_mac_dst(self, mac_dst): self._mac_dst = mac_dst
+    def set_dl_src(self, dl_src): self._dl_src = dl_src
+    def set_dl_dst(self, dl_dst): self._dl_dst = dl_dst
     def set_dl_vlan(self, dl_vlan): self._dl_vlan = int(dl_vlan)
     def set_dl_vlan_pcp(self, dl_vlan_pcp): self._dl_vlan = int(dl_vlan_pcp)
     def set_ip(self, empty): # The value for this property setter isnt used 
@@ -102,14 +112,20 @@ class FlowEntryMatchLayer2(FlowEntryMatches):
         self._dl_type = '0x0800'
     def set_dl_type(self, dl_type):
         self._dl_type = dl_type
-        self._protocol_layer3 = self._ethertypes.get(dl_type, 'UNKNOWN')
-    def get_mac_src(self): return self._mac_src
-    def get_mac_dst(self): return self._mac_dst
+        self._protocol_layer3 = dl_type
+        if dl_type in self._ethertypes:
+            self._protocol_layer3 = self._ethertypes.get(dl_type, 'UNKNOWN')
+        elif dl_type in self._protocols:
+            self._dl_type = self._protocols.get(dl_type, 'UNKNOWN')
+        else:
+            self._protocol_layer3 = 'UNKNOWN'
+    def get_dl_src(self): return self._dl_src
+    def get_dl_dst(self): return self._dl_dst
     def get_dl_vlan(self): return self._dl_vlan
     def get_dl_vlan_pcp(self): return self._dl_vlan
     def get_dl_type(self): return self._dl_type
-    mac_src     = property(fget=get_mac_src, fset=set_mac_src)
-    mac_dst     = property(fget=get_mac_dst, fset=set_mac_dst)
+    dl_src      = property(fget=get_dl_src, fset=set_dl_src)
+    dl_dst      = property(fget=get_dl_dst, fset=set_dl_dst)
     dl_vlan     = property(fget=get_dl_vlan, fset=set_dl_vlan)
     dl_vlan_pcp = property(fget=get_dl_vlan_pcp, fset=set_dl_vlan_pcp)
     ip          = property(fset=set_ip)

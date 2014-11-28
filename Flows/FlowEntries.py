@@ -70,6 +70,7 @@ class FlowEntryContainer(object):
     #        for entry in entry_list:
     #            print 'Priority %d, Entry %s' % (prio, table_entry)
     #
+    # TODO The larger the priority value, the higher the priority, does this lists them from lowest to highest 
     # TODO it would be nice/cleaner to be able to iterate the priorities with one for loop instead of 2
     #
     def iter_table_priority_entries(self, table):

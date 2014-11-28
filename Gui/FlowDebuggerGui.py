@@ -9,6 +9,7 @@ from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
+from Flows.FlowTracer import FlowTracer
 from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
 from Gui.TraceGui import TraceGui
 
@@ -87,9 +88,9 @@ class FlowDebuggerGui(object):
             Popup('Remote hosts arent supported yet\nOnly \'localhost\' is supported')
             return
             
-        flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
-                                            table=self._table_label.entry_text,
-                                            of_version=self._ofver_label.entry_text)
+        self._flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
+                                                  table=self._table_label.entry_text,
+                                                  of_version=self._ofver_label.entry_text)
 
         flow_entry_formatter = FlowEntryFormatter()
         flow_entry_formatter.show_cookie        =  self._check_cookie.checked
@@ -98,25 +99,61 @@ class FlowDebuggerGui(object):
         flow_entry_formatter.show_packets_bytes =  self._check_pkts.checked
 
         # First display the total number of entries
-        self._list.append_list_entry('Total Flow entries: %d' % (len(flow_entries)), fg='red')
+        self._list.append_list_entry('Total Flow entries: %d' % (len(self._flow_entries)), fg='red')
 
-        for table in flow_entries.iter_tables():
-            num_table_entries = flow_entries.num_table_entries(table)
+        for table in self._flow_entries.iter_tables():
+            num_table_entries = self._flow_entries.num_table_entries(table)
             self._list.append_list_entry('')
             self._list.append_list_entry('Table[%d] %d entr%s' % (table, num_table_entries, 'y' if num_table_entries==1 else 'ies'), fg='red')
             if self._radio_sort.radio_value == 'priority':
-                for (__, entry_list) in flow_entries.iter_table_priority_entries(table):
+                for (__, entry_list) in self._flow_entries.iter_table_priority_entries(table):
                     for entry in entry_list:
                         if self._check_matched_only.checked and entry.n_packets_ == 0:
                             continue
                         self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
             else:
-                for entry in flow_entries.iter_table_entries(table):
+                for entry in self._flow_entries.iter_table_entries(table):
                     if self._check_matched_only.checked and entry.n_packets_ == 0:
                         continue
                     self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
 
-    def _trace_callback(self, match_obj_list):
-        for obj in match_obj_list:
+    def _trace_callback(self, input_match_obj_list):
+        for obj in input_match_obj_list:
             print obj
-        Popup('Tracing is not implemented yet')
+        #Popup('Tracing is not implemented yet')
+
+        # TODO should we do it with a new set of flow entries, or with the ones already displayed???
+        '''
+        flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
+                                            table=self._table_label.entry_text,
+                                            of_version=self._ofver_label.entry_text)
+        '''
+
+        flow_tracer = FlowTracer(self._flow_entries)
+        next_input_matches = input_match_obj_list
+        keep_going = True
+        next_table = 0
+
+        # Iterate the tables, starting with table 0
+        # flow_tracer.apply_actions() will increment the table accordingly
+        while keep_going:
+            # This will try for a match in a particular table
+            matching_flow_entry = flow_tracer.get_match(next_table, next_input_matches)
+            if matching_flow_entry == None:
+                print 'No match found in table %d, DROP' % next_table
+                keep_going = False
+                break
+            print 'Applying actions %s' % (', '.join(matching_flow_entry.action_str_list_))
+            (next_table, drop, output, next_input_matches) = flow_tracer.apply_actions(matching_flow_entry, next_input_matches)
+            
+            if drop:
+                print 'Drop packet'
+                break
+            if output != None:
+                print 'output packet to port %s' % output
+                break
+
+            print 'Jumping to table %d' % next_table
+            #print 'Resulting packet: %s' % ', '.join(next_input_matches)
+
+

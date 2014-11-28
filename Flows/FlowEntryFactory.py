@@ -117,10 +117,11 @@ class FlowEntryFactory(object):
             flow_entry.priority_  =  int(flow_entry.match_str_list_[0].split('=')[1])
             flow_entry.match_str_list_.pop(0) # Remove the priority from the match list
 
-        # Parse each match string into a match object, skip the first element which is priority
-        for match_str in flow_entry.match_str_list_[1:]:
+        # Parse each match string into a match object
+        for match_str in flow_entry.match_str_list_:
             flow_entry.match_object_list_.append(FlowEntryFactory._parse_match(match_str))
 
+        # Parse each action string into an action object
         for action_str in flow_entry.action_str_list_:
             flow_entry.action_object_list_.append(FlowEntryFactory._parse_action(action_str))
 

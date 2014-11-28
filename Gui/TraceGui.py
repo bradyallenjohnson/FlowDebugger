@@ -31,8 +31,8 @@ class TraceGui(object):
         label_entry_frame = Frame(self._top_frame)
         label_entry_frame.pack(side=TOP, anchor=W, pady=5)
         self._in_port_label   = LabelEntry(label_entry_frame,  'in_port')
-        self._dl_src_label    = LabelEntry(label_entry_frame,  'mac_src')
-        self._dl_dst_label    = LabelEntry(label_entry_frame,  'mac_dst')
+        self._dl_src_label    = LabelEntry(label_entry_frame,  'dl_src')
+        self._dl_dst_label    = LabelEntry(label_entry_frame,  'dl_dst')
         self._dl_type_label   = LabelOption(label_entry_frame, 'dl_type', 'empty', 'empty', 'ARP', 'IP', 'RARP')
         self._vlan_vid_label  = LabelEntry(label_entry_frame,  'dl_vlan')
         self._vlan_pcp_label  = LabelEntry(label_entry_frame,  'dl_vlan_pcp')
@@ -59,7 +59,6 @@ class TraceGui(object):
         self._root.withdraw()
 
     def _trace_callback(self):
-        # TODO populate a FlowEntry with a list of fields 
         match_obj_list = []
         for label_entry in self._label_entries:
             if len(label_entry.entry_text) > 0 and label_entry.entry_text != 'empty':
