@@ -24,7 +24,7 @@ class FlowTracer(object):
             for entry in entry_list:
                 entry_matched = True
                 for match_obj in entry.match_object_list_:
-                    print 'Looking for a match for: %s' % match_obj
+                    print 'Looking for a match for in table %s, priority %s: %s' % (table, entry.priority_, match_obj)
                     item_matched = False
                     for input_match_obj in input_match_object_list:
                         if match_obj.match(input_match_obj):

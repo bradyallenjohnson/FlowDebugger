@@ -49,18 +49,20 @@ class FlowEntryMatches(object):
 
     def match(self, match):
         if type(self) != type(match):
-            print 'FlowEntryMatches.match() False: %s != %s' % (type(self), type(match))
+            print '\tFlowEntryMatches.match() False: %s != %s' % (type(self), type(match))
             return False
 
+        print '\tFlowEntryMatches.match() checking self [%s][%s] match [%s][%s]' % (type(self), self, type(match), match)
         attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
         for attr in attributes:
             if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget != None:
                 if not hasattr(match, attr[0]):
-                    print 'FlowEntryMatches.match() False, %s does not have attr %s' % (type(match), attr[0])
+                    print '\tFlowEntryMatches.match() False, %s does not have attr %s' % (type(match), attr[0])
                     return False
                 if attr[1].fget(self) != attr[1].fget(match):
-                    print 'FlowEntryMatches.match() False, %s values not equal: self [%s] match [%s]' % (attr[0], attr[1].fget(self), attr[1].fget(match))
+                    print '\tFlowEntryMatches.match() False, %s values not equal: self [%s][%s] match [%s][%s]' % (attr[0], type(attr[1].fget(self)), attr[1].fget(self), type(attr[1].fget(match)), attr[1].fget(match))
                     return False
+        print '\tFlowEntryMatches.match() True'
         return True
 #
 # OpenFlow Switch matching
@@ -92,7 +94,7 @@ class FlowEntryMatchSwitch(FlowEntryMatches):
 #
 class FlowEntryMatchLayer2(FlowEntryMatches):
     _ethertypes = {'0x0800' : 'IP', '0x0806' : 'ARP', '0x8035' : 'RARP'}
-    _protocols  = {'IP' : '0x0800', 'ARP' : '0x0806', 'RARP' : '0x8035'}
+    _ethertype_names  = {'IP' : '0x0800', 'ARP' : '0x0806', 'RARP' : '0x8035'}
 
     def __init__(self, match_str=''):
         super(FlowEntryMatchLayer2, self).__init__(match_str, 'ETHERNET')
@@ -107,18 +109,11 @@ class FlowEntryMatchLayer2(FlowEntryMatches):
     def set_dl_dst(self, dl_dst): self._dl_dst = dl_dst
     def set_dl_vlan(self, dl_vlan): self._dl_vlan = int(dl_vlan)
     def set_dl_vlan_pcp(self, dl_vlan_pcp): self._dl_vlan = int(dl_vlan_pcp)
-    def set_ip(self, empty): # The value for this property setter isnt used 
-        self._protocol_layer3 = 'IP'
-        self._dl_type = '0x0800'
+    # The value for this property setter isnt used 
+    def set_ip(self, empty): (self._protocol_layer3, self._dl_type) = ('IP', '0x0800')
     def set_dl_type(self, dl_type):
-        self._dl_type = dl_type
-        self._protocol_layer3 = dl_type
-        if dl_type in self._ethertypes:
-            self._protocol_layer3 = self._ethertypes.get(dl_type, 'UNKNOWN')
-        elif dl_type in self._protocols:
-            self._dl_type = self._protocols.get(dl_type, 'UNKNOWN')
-        else:
-            self._protocol_layer3 = 'UNKNOWN'
+        self._protocol_layer3 = self._ethertypes.get(dl_type, dl_type)
+        self._dl_type = self._ethertype_names.get(dl_type, dl_type)
     def get_dl_src(self): return self._dl_src
     def get_dl_dst(self): return self._dl_dst
     def get_dl_vlan(self): return self._dl_vlan
@@ -141,14 +136,21 @@ class FlowEntryMatchLayer3(FlowEntryMatches):
         self._nw_dst = None
         self._nw_tos = None
         self._protocol_layer4 = ''
-        self._nw_proto = 0
-        self._nw_protos = {'1' : 'ICMP', '6' : 'TCP', '17' : 'UDP', '132' : 'SCTP'}
+        #self._nw_proto = 0
+        self._nw_proto = None
+        self._layer3_protocols = {'TCP' : 'IP', 'UDP' : 'IP', 'SCTP' : 'IP'}
+        self._nw_protos        = {'1' : 'ICMP', '6' : 'TCP', '17' : 'UDP', '132' : 'SCTP'}
+        self._nw_proto_names   = {'ICMP' : '1', 'TCP' : '6', 'UDP' : '17', 'SCTP' : '132'}
         # TODO need to add icmp_type, icmp_code
-        # TODO need to add IP tos, ecn, ttl
+        # TODO need to add IP ecn, ttl
 
-    def set_tcp(self, empty): (self._nw_proto, self._protocol_layer4, self._protocol) = (6, 'TCP', 'IP')
-    def set_udp(self, empty): (self._nw_proto, self._protocol_layer4, self._protocol) = (17, 'UDP', 'IP')
-    def set_nw_proto(self, nw_proto): (self._nw_proto, self._protocol_layer4) = (nw_proto, self._nw_protos.get(nw_proto, 'UNKNOWN'))
+    def set_tcp(self, empty): (self._nw_proto, self._protocol_layer4, self._protocol) = ('6', 'TCP', 'IP')
+    def set_udp(self, empty): (self._nw_proto, self._protocol_layer4, self._protocol) = ('17', 'UDP', 'IP')
+    def set_nw_proto(self, nw_proto):
+        self._protocol_layer4 = self._nw_protos.get(nw_proto, nw_proto)
+        self._nw_proto = self._nw_proto_names.get(nw_proto, nw_proto)
+        self._protocol = self._layer3_protocols.get(self._protocol_layer4, 'L3')
+            
     def set_nw_src(self, nw_src): self._nw_src = nw_src
     def set_nw_dst(self, nw_dst): self._nw_dst = nw_dst
     def set_nw_tos(self, tos): self._nw_tos = tos

@@ -119,7 +119,7 @@ class FlowDebuggerGui(object):
 
     def _trace_callback(self, input_match_obj_list):
         for obj in input_match_obj_list:
-            print obj
+            print '\t%s' % obj
         #Popup('Tracing is not implemented yet')
 
         # TODO should we do it with a new set of flow entries, or with the ones already displayed???

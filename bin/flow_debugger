@@ -13,7 +13,7 @@ import sys
 # Since the script has to be launched with sudo, it loses then env, namely PYTHONPATH
 # so it cant find from where to import Flows.FlowEntries
 # When FlowDebugger/Flows (and others) is correctly installed, this wont be a problem anymore.
-sys.path.append('/home/mininet/FlowDebugger')
+sys.path.append('/home/mininet/workspace/FlowDebugger')
 sys.path.append('/home/mcl/workspace/FlowDebugger')
 #print sys.path
 
