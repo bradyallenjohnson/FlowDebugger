@@ -9,11 +9,13 @@ from Tkinter import Frame, Toplevel
 from Tkconstants import BOTTOM, LEFT, S, TOP, W, X
 from Gui.GuiMisc import Buttons, LabelEntry, LabelOption
 from Flows.FlowEntryFactory import FlowEntryFactory
+from Flows.FlowTracer import FlowTracer
 
 class TraceGui(object):
 
-    def __init__(self, trace_callback):
-        self._root_trace_callback = trace_callback
+    def __init__(self, trace_complete_callback=None):
+        self._trace_complete_callback = trace_complete_callback
+        self._flow_entries_container = None
 
         self._root = Toplevel()
         self._root.title('FlowEntry Trace')
@@ -59,11 +61,45 @@ class TraceGui(object):
         self._root.withdraw()
 
     def _trace_callback(self):
-        match_obj_list = []
+        input_match_obj_list = []
         for label_entry in self._label_entries:
             if len(label_entry.entry_text) > 0 and label_entry.entry_text != 'empty':
-                match_obj_list.append(FlowEntryFactory.get_match_object(label_entry.label_text, label_entry.entry_text))
-        self._root_trace_callback(match_obj_list)
+                match_object = FlowEntryFactory.get_match_object(label_entry.label_text, label_entry.entry_text)
+                #print '\t%s' % match_object
+                input_match_obj_list.append(match_object)
+
+        flow_tracer = FlowTracer(self._flow_entries_container)
+        next_input_matches = input_match_obj_list
+        keep_going = True
+        next_table = 0
+        matched_flow_entries = OrderedDict()
+
+        # Iterate the tables, starting with table 0
+        # flow_tracer.apply_actions() will increment the table accordingly
+        while keep_going:
+            # This will try for a match in a particular table
+            matching_flow_entry = flow_tracer.get_match(next_table, next_input_matches)
+            if not matching_flow_entry:
+                print 'No match found in table %d, DROP' % next_table
+                keep_going = False
+                break
+            #print 'Applying actions %s' % (', '.join(matching_flow_entry.action_str_list_))
+            (next_table, drop, output, next_input_matches) = flow_tracer.apply_actions(matching_flow_entry, next_input_matches)
+            matched_flow_entries[matching_flow_entry] = next_input_matches
+
+            if drop:
+                print 'Drop packet'
+                break
+            if output:
+                print 'Output packet to %s' % output
+                break
+
+            #print 'Jumping to table %d' % next_table
+            #print 'Resulting packet: %s' % ', '.join(next_input_matches)
+
+        # This will call the root gui to display matched flow entries
+        if self._trace_complete_callback:
+            self._trace_complete_callback(matched_flow_entries)
 
     def _reset_callback(self):
         # Reset all of the fields
@@ -76,3 +112,8 @@ class TraceGui(object):
     def display(self):
         self._root.update()
         self._root.deiconify()
+
+    def set_flow_entries_container(self, fe_container):
+        self._flow_entries_container = fe_container
+
+    flow_entries_conatiner = property(fset=set_flow_entries_container)

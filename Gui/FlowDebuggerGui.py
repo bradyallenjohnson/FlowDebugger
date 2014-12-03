@@ -4,12 +4,12 @@ Created on Nov 20, 2014
 @author: Brady Johnson
 '''
 
+from sys import stdout
 from collections import OrderedDict
 from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
 from Flows.DumpFlows import DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
-from Flows.FlowTracer import FlowTracer
 from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
 from Gui.TraceGui import TraceGui
 
@@ -55,12 +55,12 @@ class FlowDebuggerGui(object):
             self._radio_sort.radio_value = radio_vals[1]
 
         # Create the Trace GUI window, but only show it when the trace button is pressed
-        self._trace_gui = TraceGui(self._trace_callback)
+        self._trace_gui = TraceGui(self._trace_complete_callback)
 
         # the buttons
         button_frame = Frame(self._top_frame, padx=5)
         button_frame.pack(side=RIGHT, anchor=E)
-        buttons_dict = OrderedDict([('refresh', self._refresh_callback), ('trace', self._trace_gui.display), ('quit', self._root.quit)])
+        buttons_dict = OrderedDict([('refresh', self._refresh_callback), ('trace', self._trace_callback), ('quit', self._root.quit)])
         Buttons(button_frame, buttons_dict)
 
         # The scrollable list
@@ -117,43 +117,23 @@ class FlowDebuggerGui(object):
                         continue
                     self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
 
-    def _trace_callback(self, input_match_obj_list):
-        for obj in input_match_obj_list:
-            print '\t%s' % obj
-        #Popup('Tracing is not implemented yet')
+    def _trace_callback(self):
+        self._trace_gui.flow_entries_conatiner = self._flow_entries
+        self._trace_gui.display()
 
-        # TODO should we do it with a new set of flow entries, or with the ones already displayed???
-        '''
-        flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
-                                            table=self._table_label.entry_text,
-                                            of_version=self._ofver_label.entry_text)
-        '''
-
-        flow_tracer = FlowTracer(self._flow_entries)
-        next_input_matches = input_match_obj_list
-        keep_going = True
-        next_table = 0
-
-        # Iterate the tables, starting with table 0
-        # flow_tracer.apply_actions() will increment the table accordingly
-        while keep_going:
-            # This will try for a match in a particular table
-            matching_flow_entry = flow_tracer.get_match(next_table, next_input_matches)
-            if matching_flow_entry == None:
-                print 'No match found in table %d, DROP' % next_table
-                keep_going = False
-                break
-            print 'Applying actions %s' % (', '.join(matching_flow_entry.action_str_list_))
-            (next_table, drop, output, next_input_matches) = flow_tracer.apply_actions(matching_flow_entry, next_input_matches)
-            
-            if drop:
-                print 'Drop packet'
-                break
-            if output != None:
-                print 'output packet to port %s' % output
-                break
-
-            print 'Jumping to table %d' % next_table
-            #print 'Resulting packet: %s' % ', '.join(next_input_matches)
-
-
+    # matched_flow_entries will be a dictionary of flow_entry to modified flow_entry which will show
+    # which flow entries were matched and how the packet was changed by the corresponding actions
+    def _trace_complete_callback(self, matched_flow_entries):
+        str_list = []
+        for (match, result) in matched_flow_entries.iteritems():
+            '''
+            print '\nMatch found in table %s\n\tFlow Entry [%s]\n\tResulting flow entries [%d]: ' % (match.table_, match, len(result))
+            print result
+            for r in result:
+                print '\t\t[%s]' % r
+            '''
+            str_list.append('\nMatch found in table %s\n\tFlow Entry [%s]\n\tResulting flow entries [%d]:' % (match.table_, match, len(result)))
+            for r in result:
+                str_list.append('\n\t\t[%s]' % r)
+        #Popup('%s'%''.join(str_list))
+        print '%s' % ''.join(str_list)

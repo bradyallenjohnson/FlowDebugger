@@ -41,10 +41,10 @@ class FlowEntryAction(object):
         attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
         #print 'FlowEntryAction len(attrs)=%d' % (attributes)
         for attr in attributes:
-            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget != None:
+            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget:
                 value = attr[1].fget(self) 
                 #print 'FlowEntryAction property %s=%s' % (attr[0], value)
-                if value != None:
+                if value:
                     str_list.append('%s = %s' % (attr[0], value))
         return ', '.join(str_list) if len(str_list) > 0 else None
 
@@ -65,7 +65,7 @@ class FlowEntryActionSwitch(FlowEntryAction):
         self._metadata_value = metadata_list[0]
         self._metadata_mask  = metadata_list[1]
     def get_goto_table(self): return self._goto_table
-    def get_metadata(self):   return '%s/%s' % (self._metadata_value, self._metadata_mask) if self._metadata_value != None else None
+    def get_metadata(self):   return '%s/%s' % (self._metadata_value, self._metadata_mask) if self._metadata_value else None
     goto_table = property(fget=get_goto_table, fset=set_goto_table)
     write_metadata = property(fget=get_metadata, fset=set_metadata)
 
@@ -145,31 +145,40 @@ class FlowEntryActionSetField(FlowEntryAction):
     def get_set_field(self): return '%s - %s' % (self.set_field_key, self.set_field_value)
     set_field  = property(fget=get_set_field, fset=set_set_field)
 
-# TODO consider converting the FlowEntryActionMod class into FlowEntryActionSetField class
+# TODO consider converting the FlowEntryActionMod class into FlowEntryActionSetField class (or vice versa)
 #      All you need to do is remove the "mod_" string from the _set_mod_key, and they're the same
 class FlowEntryActionMod(FlowEntryAction):
     def __init__(self, action_str=''):
         super(FlowEntryActionMod, self).__init__(action_str)
         self._set_mod_key = self.action_str_key
-        self._set_mod_value = ''
-    def set_mod_dl_src(self, mac):   self._set_mod_value = mac
-    def set_mod_dl_dst(self, mac):   self._set_mod_value = mac
-    def set_mod_nw_src(self, ip):    self._set_mod_value = ip
-    def set_mod_nw_dst(self, ip):    self._set_mod_value = ip
-    def set_mod_tp_src(self, port):  self._set_mod_value = port
-    def set_mod_tp_dst(self, port):  self._set_mod_value = port
-    def set_mod_nw_tos(self, tos):   self._set_mod_value = tos
-    def set_mod_vlan_vid(self, vid): self._set_mod_value = vid
-    def set_mod_vlan_pcp(self, pcp): self._set_mod_value = pcp
-    def get_mod_dl_src(self):   return self._set_mod_value
-    def get_mod_dl_dst(self):   return self._set_mod_value
-    def get_mod_nw_src(self):   return self._set_mod_value
-    def get_mod_nw_dst(self):   return self._set_mod_value
-    def get_mod_tp_src(self):   return self._set_mod_value
-    def get_mod_tp_dst(self):   return self._set_mod_value
-    def get_mod_nw_tos(self):   return self._set_mod_value
-    def get_mod_vlan_vid(self): return self._set_mod_value
-    def get_mod_vlan_pcp(self): return self._set_mod_value
+        self._set_mod_value = self.action_str_value
+        self._dl_src = None
+        self._dl_dst = None
+        self._nw_src = None
+        self._nw_dst = None
+        self._nw_tos = None
+        self._tp_src = None
+        self._tp_dst = None
+        self._vlan_vid = None
+        self._vlan_pcp = None
+    def set_mod_dl_src(self, mac):   self._dl_src = mac
+    def set_mod_dl_dst(self, mac):   self._dl_dst = mac
+    def set_mod_nw_src(self, ip):    self._nw_src = ip
+    def set_mod_nw_dst(self, ip):    self._nw_dst = ip
+    def set_mod_tp_src(self, port):  self._tp_src = port
+    def set_mod_tp_dst(self, port):  self._tp_dst = port
+    def set_mod_nw_tos(self, tos):   self._nw_tos = tos
+    def set_mod_vlan_vid(self, vid): self._vlan_vid = vid
+    def set_mod_vlan_pcp(self, pcp): self._vlan_pcp = pcp
+    def get_mod_dl_src(self):   return self._dl_src
+    def get_mod_dl_dst(self):   return self._dl_dst
+    def get_mod_nw_src(self):   return self._nw_src
+    def get_mod_nw_dst(self):   return self._nw_dst
+    def get_mod_tp_src(self):   return self._tp_src
+    def get_mod_tp_dst(self):   return self._tp_dst
+    def get_mod_nw_tos(self):   return self._nw_tos
+    def get_mod_vlan_vid(self): return self._vlan_vid
+    def get_mod_vlan_pcp(self): return self._vlan_pcp
     mod_dl_src    = property(fget=get_mod_dl_src,   fset=set_mod_dl_src)
     mod_dl_dst    = property(fget=get_mod_dl_dst,   fset=set_mod_dl_dst)
     mod_nw_src    = property(fget=get_mod_nw_src,   fset=set_mod_nw_src)

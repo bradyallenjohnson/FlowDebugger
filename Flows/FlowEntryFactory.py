@@ -55,7 +55,7 @@ class FlowEntryFactory(object):
             FlowEntryFactory._init_flow_match_dict()
         parser_obj_list = FlowEntryFactory._flow_match_setters.get(match_str.split('=')[0], [FlowEntryMatchUnknown.__class__, None])
         obj = parser_obj_list[0](match_str) # instantiate the object
-        if parser_obj_list[1] != None:      # call the property setter, if there is one
+        if parser_obj_list[1]:              # call the property setter, if there is one
             parser_obj_list[1](obj, obj.match_str_value)
         else:
             print 'Cant parse: %s' % match_str
@@ -68,7 +68,7 @@ class FlowEntryFactory(object):
             FlowEntryFactory._init_flow_action_dict()
         parser_obj_list = FlowEntryFactory._flow_action_setters.get(action_str.split(':')[0], [FlowEntryActionUnknown.__class__, None])
         obj = parser_obj_list[0](action_str) # instantiate the object
-        if parser_obj_list[1] != None:       # call the property setter, if there is one
+        if parser_obj_list[1]:               # call the property setter, if there is one
             parser_obj_list[1](obj, obj.action_str_value)
         else:
             print 'Cant parse: %s' % action_str
@@ -133,12 +133,12 @@ class FlowEntryFactory(object):
             FlowEntryFactory._init_flow_match_dict()
 
         parser_obj_list = FlowEntryFactory._flow_match_setters.get(key, None)
-        if parser_obj_list == None:
+        if not parser_obj_list:
             print 'Cant get match Object'
             return None
 
         obj = parser_obj_list[0]()      # instantiate the object
-        if parser_obj_list[1] != None:  # call the property setter, if there is one
+        if parser_obj_list[1]:          # call the property setter, if there is one
             parser_obj_list[1](obj, value)
 
         return obj

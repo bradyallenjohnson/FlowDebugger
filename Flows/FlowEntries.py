@@ -117,7 +117,7 @@ class FlowEntryContainer(object):
 
         # Store the entries by Table
         flows_list = self.flow_entries_byTable.get(flow_entry.table_)
-        if flows_list == None:
+        if not flows_list:
             # the first entry for this table number
             self.flow_entries_byTable[flow_entry.table_] = [flow_entry]
         else:
@@ -126,12 +126,12 @@ class FlowEntryContainer(object):
 
         # Store the entries by Table and Priority
         flows_prio_table = self.flow_entries_byTablePriority.get(flow_entry.table_)
-        if flows_prio_table == None:
+        if not flows_prio_table:
             # the first entry for this table number
             self.flow_entries_byTablePriority[flow_entry.table_] = {flow_entry.priority_ : [flow_entry]}
         else:
             priority_dict = flows_prio_table.get(flow_entry.priority_)
-            if priority_dict == None:
+            if not priority_dict:
                 # the first entry in this table for this priority
                 flows_prio_table[flow_entry.priority_] = [flow_entry]
             else:

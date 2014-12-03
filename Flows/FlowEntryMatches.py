@@ -41,29 +41,70 @@ class FlowEntryMatches(object):
         str_list = []
         attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
         for attr in attributes:
-            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget != None:
+            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget:
                 value = attr[1].fget(self)
-                if value != None:
+                if value:
                     str_list.append('%s = %s' % (attr[0], value))
         return ', '.join(str_list)
 
-    def match(self, match):
-        if type(self) != type(match):
-            print '\tFlowEntryMatches.match() False: %s != %s' % (type(self), type(match))
+    #
+    # Compare two FlowEntryMatches objects for equality. They must both be of the same derived 
+    # class type, have the same attributes set, and the attributes values must be equal
+    #
+    def match(self, match_rhs):
+        if type(self) != type(match_rhs):
+            #print '\tFlowEntryMatches.match() False: %s != %s' % (type(self), type(match_rhs))
             return False
 
-        print '\tFlowEntryMatches.match() checking self [%s][%s] match [%s][%s]' % (type(self), self, type(match), match)
+        #print '\tFlowEntryMatches.match() checking self [%s][%s] match [%s][%s]' % (type(self), self, type(match_rhs), match_rhs)
         attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
         for attr in attributes:
-            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget != None:
-                if not hasattr(match, attr[0]):
-                    print '\tFlowEntryMatches.match() False, %s does not have attr %s' % (type(match), attr[0])
+            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget:
+                if not hasattr(match_rhs, attr[0]):
+                    #print '\tFlowEntryMatches.match() False, %s does not have attr %s' % (type(match_rhs), attr[0])
                     return False
-                if attr[1].fget(self) != attr[1].fget(match):
-                    print '\tFlowEntryMatches.match() False, %s values not equal: self [%s][%s] match [%s][%s]' % (attr[0], type(attr[1].fget(self)), attr[1].fget(self), type(attr[1].fget(match)), attr[1].fget(match))
+                if attr[1].fget(self) != attr[1].fget(match_rhs):
+                    #print '\tFlowEntryMatches.match() False, %s values not equal: self [%s][%s] match [%s][%s]' % (attr[0], type(attr[1].fget(self)), attr[1].fget(self), type(attr[1].fget(match_rhs)), attr[1].fget(match_rhs))
                     return False
-        print '\tFlowEntryMatches.match() True'
+        #print '\tFlowEntryMatches.match() True'
         return True
+
+    #
+    # Compare if two FlowEntryMatches objects are compareable, meaning they are 
+    # both of the same derived class type, they have same attributes, and the
+    # attributes are set (not None).
+    # For example, 2 FlowEntryMatchLayer2 objects are NOT compareable, if one has
+    # dl_src set and the other has dl_dst set.
+    #
+    def is_compareable(self, match_rhs):
+        if type(self) != type(match_rhs):
+            #print '\tFlowEntryMatches.is_compareable() False: %s != %s' % (type(self), type(match_rhs))
+            return False
+
+        #print '\tFlowEntryMatches.is_compareable() checking self [%s][%s] match [%s][%s]' % (type(self), self, type(match_rhs), match_rhs)
+        attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
+        for attr in attributes:
+            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget:
+                # Check that both have the same attributes
+                if not hasattr(match_rhs, attr[0]):
+                    #print '\tFlowEntryMatches.is_compareable() False, %s does not have attr %s' % (type(match_rhs), attr[0])
+                    return False
+                # Check that for each self.attribute that its not None in match_rhs
+                if attr[1].fget(self) and not attr[1].fget(match_rhs):
+                    #print '\tFlowEntryMatches.is_compareable() False, match doesnt have an attr value: [%s][%s]' % (attr[1].fget(self), attr[1].fget(match_rhs))
+                    return False
+        #print 'They are compareable'
+        return True
+
+    def copy_match(self, match_rhs):
+        attributes = inspect.getmembers(type(self), lambda a : not(inspect.isroutine(a)) and inspect.isdatadescriptor(a))
+        for attr in attributes:
+            if not(attr[0].startswith('__') and attr[0].endswith('__')) and attr[1].fget:
+                # Set it, only if match_rhs has the attr, self has the setter, the match_rhs getter isnt None
+                if hasattr(match_rhs, attr[0]) and attr[1].fset and attr[1].fget(match_rhs):
+                    attr[1].fset(self, attr[1].fget(match_rhs))
+                    
+
 #
 # OpenFlow Switch matching
 # TODO should metadata be included here
@@ -84,7 +125,7 @@ class FlowEntryMatchSwitch(FlowEntryMatches):
         self._metadata_mask  = metadata_list[1]
     def get_inport(self):   return self._in_port
     def get_outport(self):  return self._out_port
-    def get_metadata(self): return '%s/%s' % (self._metadata_value, self._metadata_mask) if self._metadata_value != None else None
+    def get_metadata(self): return '%s/%s' % (self._metadata_value, self._metadata_mask) if self._metadata_value else None
     in_port  = property(fget=get_inport, fset=set_inport)
     out_port = property(fget=get_outport, fset=set_outport)
     metadata = property(fget=get_metadata, fset=set_metadata)
@@ -119,12 +160,14 @@ class FlowEntryMatchLayer2(FlowEntryMatches):
     def get_dl_vlan(self): return self._dl_vlan
     def get_dl_vlan_pcp(self): return self._dl_vlan
     def get_dl_type(self): return self._dl_type
+    def get_l3_protocol(self): return self._protocol_layer3
     dl_src      = property(fget=get_dl_src, fset=set_dl_src)
     dl_dst      = property(fget=get_dl_dst, fset=set_dl_dst)
     dl_vlan     = property(fget=get_dl_vlan, fset=set_dl_vlan)
     dl_vlan_pcp = property(fget=get_dl_vlan_pcp, fset=set_dl_vlan_pcp)
     ip          = property(fset=set_ip)
     dl_type     = property(fget=get_dl_type, fset=set_dl_type)
+    l3_protocol = property(fget=get_l3_protocol)
 
 #
 # IP, ICMP, IGMP

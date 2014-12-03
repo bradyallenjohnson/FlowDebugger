@@ -42,7 +42,7 @@ class LabelEntry(LabelBase):
         print 'Label [%s] text entered: %s' % (self.label_text, self.entry_text)
         #self.clear_entry()
         #self.label_text = self.entry_text
-        if self._on_input_callback != None:
+        if self._on_input_callback:
             self._on_input_callback()
 
     def clear_entry(self):
@@ -128,11 +128,11 @@ class Checked(object):
     def _on_check(self):
         if self._checked_value.get() == 1:
             #print '%s Checked' % self._check_text
-            if self._on_check_callback != None:
+            if self._on_check_callback:
                 self._on_check_callback()
         else:
             #print '%s Un-hecked' % self._check_text
-            if self._on_uncheck_callback != None:
+            if self._on_uncheck_callback:
                 self._on_uncheck_callback()
 
     def get_checked(self):
@@ -181,7 +181,7 @@ class ScrolledList(object):
     def append_list_entry(self, entry_str, fg=None):
         self._list_pos += 1
         self._list.insert(END, entry_str)
-        if fg != None:
+        if fg:
             size = self._list.size()
             self._list.itemconfig(size-1, fg=fg)
 

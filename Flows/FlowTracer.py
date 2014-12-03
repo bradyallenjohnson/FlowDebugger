@@ -4,13 +4,35 @@ Created on Nov 27, 2014
 @author: Brady Johnson
 '''
 
+import copy
 from Flows.FlowEntryActions import FlowEntryActionSetField, FlowEntryActionMod, FlowEntryActionSwitchPort, FlowEntryActionSwitch 
+from Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4
 
 class FlowTracer(object):
 
     # flow_entries is a list as returned by Flows.DumpFlows.dump_flows()
     def __init__(self, flow_entries):
         self._flow_entries = flow_entries
+        self._set_fields_actions_to_match = {'eth_src' : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_src],
+                                             'eth_dst' : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_dst],
+                                             'vlan_vid': [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_vlan],
+                                             'vlan_pcp': [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_vlan_pcp],
+                                             'ip_src'  : [FlowEntryMatchLayer3, FlowEntryMatchLayer3.nw_src], # should we also create a L2.IP?
+                                             'ip_dst'  : [FlowEntryMatchLayer3, FlowEntryMatchLayer3.nw_dst],
+                                             'tcp_src' : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_src], # should we also create a L3.TCP?
+                                             'tcp_dst' : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_dst],
+                                             'udp_src' : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_src],
+                                             'udp_dst' : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_dst]                                    
+                                             }
+        self._mod_actions_to_match = {'mod_dl_src'      : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_src],
+                                      'mod_dl_dst'      : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_dst],
+                                      'mod_dl_vlan_vid' : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_vlan],
+                                      'mod_dl_vlan_pcp' : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_vlan_pcp],
+                                      'mod_nw_src'      : [FlowEntryMatchLayer3, FlowEntryMatchLayer3.nw_src],
+                                      'mod_nw_dst'      : [FlowEntryMatchLayer3, FlowEntryMatchLayer3.nw_dst],
+                                      'mod_tp_src'      : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_src],
+                                      'mod_tp_dst'      : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_dst]
+                                      }
 
     #
     # Iterate the flow entries in the specified table and returns the 
@@ -24,18 +46,18 @@ class FlowTracer(object):
             for entry in entry_list:
                 entry_matched = True
                 for match_obj in entry.match_object_list_:
-                    print 'Looking for a match for in table %s, priority %s: %s' % (table, entry.priority_, match_obj)
+                    #print 'Looking for a match for in table %s, priority %s: %s' % (table, entry.priority_, match_obj)
                     item_matched = False
                     for input_match_obj in input_match_object_list:
                         if match_obj.match(input_match_obj):
                             item_matched = True
                             break
-                    if item_matched:
-                        print 'Match found, match_obj [%s] input [%s]' % (match_obj, input_match_obj)
-                    else:
+                    if not item_matched:
                         # Go on to the next entry in the table
                         entry_matched = False
                         break
+                    #else:
+                        #print 'Match found, match_obj [%s] input [%s]' % (match_obj, input_match_obj)
                 if entry_matched:
                     return entry
 
@@ -49,10 +71,12 @@ class FlowTracer(object):
         drop = False
         output = None
 
-        # TODO need to merge the input_matches with the actions
+        # Perform a deep copy, since we may be modifying it
+        next_input_matches = copy.deepcopy(input_matches)
 
         for action in flow_entry.action_object_list_:
             if isinstance(action, FlowEntryActionSwitchPort):
+                #print 'FlowEntryActionSwitchPort: %s' % action
                 output = action.output_type
                 if action._packet_in:
                     # TODO finish this
@@ -60,16 +84,47 @@ class FlowTracer(object):
                 elif action.drop:
                     drop = True
             elif isinstance(action, FlowEntryActionSwitch):
-                if action.goto_table != None:
+                #print 'FlowEntryActionSwitch: %s' % action
+                if action.goto_table:
                     next_table = int(action.goto_table)
                 else:
-                    # TODO finish this
-                    print 'metadata'
+                    metadata_match = FlowEntryMatchSwitch()
+                    metadata_match.metadata = action.write_metadata
+                    self._merge_match(next_input_matches, metadata_match)
             elif isinstance(action, FlowEntryActionSetField):
-                print 'FlowEntryActionSetField: %s' % action
+                #print 'FlowEntryActionSetField: %s' % action
+                action_list = self._set_fields_actions_to_match.get(action.set_field_key)
+                if not action_list:
+                    # TODO popup
+                    print 'ERROR FlowTracer.apply_actions() cant get match object for %s' % action
+                match = action_list[0]() # instantiate
+                action_list[1].fset(match, action.set_field_value)
+                self._merge_match(next_input_matches, match)
+                    
             elif isinstance(action, FlowEntryActionMod):
-                print 'FlowEntryActionMod: %s' % action
+                #print 'FlowEntryActionMod: %s' % action
+                action_list = self._mod_actions_to_match.get(action.action_str_key)
+                if not action_list:
+                    # TODO popup
+                    print 'ERROR FlowTracer.apply_actions() cant get match object for %s' % action
+                match = action_list[0]() # instantiate
+                action_list[1].fset(match, action.action_str_value)
+                self._merge_match(next_input_matches, match)
             else:
-                print 'unknown action'
+                # TODO popup
+                print 'ERROR unknown action %s' % action
 
-        return (next_table, drop, output, input_matches)
+        return (next_table, drop, output, next_input_matches)
+
+    def _merge_match(self, input_match_list, flow_entry_match):
+        flow_entry_match_found = False
+        for match in input_match_list:
+            if match.is_compareable(flow_entry_match):
+                # merge the match
+                match.copy_match(flow_entry_match)
+                flow_entry_match_found = True
+                break
+
+        # if it wasnt already in the input_match_list, then add it
+        if not flow_entry_match_found:
+            input_match_list.append(flow_entry_match)
