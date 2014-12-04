@@ -9,22 +9,29 @@ INSTALLATION:
 There are several options to download and install the flow_debugger, as follows:
 
 1) Clone the git repository
+
 	$ git clone https://github.com/bradyallenjohnson/FlowDebugger.git
 	$ cd FlowDebugger
 	$ sudo python ./setup.py install
 
 2) Download the source distribution
+
 	A source distribution is available here:
+
 		https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.tar.gz
+
 	Download it and install as follows:
 	$ tar xvzf FlowDebugger-1.0.tar.gz
 	$ cd FlowDebugger-1.0
 	$ sudo python ./setup.py install
 
 3) Download a Linux binary distribution
+
 	A binary distribution is available in two different formats here:
+
 		https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.linux-x86_64.tar.gz
 		https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.linux-x86_64.zip
+
 	Download the appropriate format and install as follows:
 	$ cd /
 	$ sudo tar xvzf FlowDebugger-1.0.linux-x86_64.tar.gz
