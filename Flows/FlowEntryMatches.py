@@ -47,6 +47,9 @@ class FlowEntryMatches(object):
                     str_list.append('%s = %s' % (attr[0], value))
         return ', '.join(str_list)
 
+    def __eq__(self, match_rhs):
+        return self.match(match_rhs)
+
     #
     # Compare two FlowEntryMatches objects for equality. They must both be of the same derived 
     # class type, have the same attributes set, and the attributes values must be equal

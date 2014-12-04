@@ -4,7 +4,6 @@ Created on Nov 20, 2014
 @author: Brady Johnson
 '''
 
-from sys import stdout
 from collections import OrderedDict
 from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
@@ -44,7 +43,7 @@ class FlowDebuggerGui(object):
         self._check_cookie       = Checked(checks_frame, 'show cookie',       set_checked=check_cookie)
         self._check_matched_only = Checked(checks_frame, 'show matched only', set_checked=check_matched)
         #self._radio_sort         = LabelRadio(checks_frame, 'sort by', ['priority', 'match string'])
-        
+
         # Sorting
         sort_frame = Frame(self._top_frame)
         sort_frame.pack(side=LEFT, anchor=N, padx=5)
@@ -55,7 +54,7 @@ class FlowDebuggerGui(object):
             self._radio_sort.radio_value = radio_vals[1]
 
         # Create the Trace GUI window, but only show it when the trace button is pressed
-        self._trace_gui = TraceGui(self._trace_complete_callback)
+        self._trace_gui = TraceGui(self._trace_results_callback)
 
         # the buttons
         button_frame = Frame(self._top_frame, padx=5)
@@ -67,14 +66,14 @@ class FlowDebuggerGui(object):
         list_frame = Frame(self._root)
         list_frame.pack(side=BOTTOM, expand=YES, fill=BOTH)
         self._list = ScrolledList(list_frame)
+        # keep the index of each FlowEntry to be able to highlight the tracing later
+        self._list_entry_indices = {}
 
     def run(self):
         self._refresh_callback()
         self._root.mainloop()
 
     def _refresh_callback(self):
-
-        self._list.clear()
 
         if len(self._switch_label.entry_text) == 0:
             # TODO consider adding functionality to list all availale switches
@@ -87,7 +86,10 @@ class FlowDebuggerGui(object):
         if self._host_label.entry_text != 'localhost':
             Popup('Remote hosts arent supported yet\nOnly \'localhost\' is supported')
             return
-            
+
+        self._list.clear()
+        self._list_entry_indices.clear()
+
         self._flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
                                                   table=self._table_label.entry_text,
                                                   of_version=self._ofver_label.entry_text)
@@ -110,30 +112,26 @@ class FlowDebuggerGui(object):
                     for entry in entry_list:
                         if self._check_matched_only.checked and entry.n_packets_ == 0:
                             continue
-                        self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
+                        index = self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
+                        self._list_entry_indices[entry] = index
             else:
                 for entry in self._flow_entries.iter_table_entries(table):
                     if self._check_matched_only.checked and entry.n_packets_ == 0:
                         continue
-                    self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
+                    index = self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
+                    self._list_entry_indices[entry] = index
 
     def _trace_callback(self):
+        if not self._flow_entries or len(self._flow_entries) < 1:
+            Popup('No FlowEntries to Trace')
+            return
+
         self._trace_gui.flow_entries_conatiner = self._flow_entries
         self._trace_gui.display()
 
-    # matched_flow_entries will be a dictionary of flow_entry to modified flow_entry which will show
-    # which flow entries were matched and how the packet was changed by the corresponding actions
-    def _trace_complete_callback(self, matched_flow_entries):
-        str_list = []
-        for (match, result) in matched_flow_entries.iteritems():
-            '''
-            print '\nMatch found in table %s\n\tFlow Entry [%s]\n\tResulting flow entries [%d]: ' % (match.table_, match, len(result))
-            print result
-            for r in result:
-                print '\t\t[%s]' % r
-            '''
-            str_list.append('\nMatch found in table %s\n\tFlow Entry [%s]\n\tResulting flow entries [%d]:' % (match.table_, match, len(result)))
-            for r in result:
-                str_list.append('\n\t\t[%s]' % r)
-        #Popup('%s'%''.join(str_list))
-        print '%s' % ''.join(str_list)
+
+    # matched_flow_entries will be a dictionary of matched flow_entry to a list of FlowEntryMatch objects which
+    # will show which flow entries were matched and how the packet was changed by the corresponding actions
+    def _trace_results_callback(self, matched_flow_entries):
+        for (matched_flow_entry, __) in matched_flow_entries.iteritems():
+            self._list.highlight_entry(self._list_entry_indices.get(matched_flow_entry), bg='grey')

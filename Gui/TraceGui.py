@@ -6,15 +6,15 @@ Created on Nov 26, 2014
 
 from collections import OrderedDict
 from Tkinter import Frame, Toplevel
-from Tkconstants import BOTTOM, LEFT, S, TOP, W, X
-from Gui.GuiMisc import Buttons, LabelEntry, LabelOption
+from Tkconstants import BOTH, BOTTOM, LEFT, S, TOP, W, X, YES
+from Gui.GuiMisc import Buttons, LabelEntry, LabelOption, ScrolledList
 from Flows.FlowEntryFactory import FlowEntryFactory
 from Flows.FlowTracer import FlowTracer
 
 class TraceGui(object):
 
     def __init__(self, trace_complete_callback=None):
-        self._trace_complete_callback = trace_complete_callback
+        self._trace_results_callback = trace_complete_callback
         self._flow_entries_container = None
 
         self._root = Toplevel()
@@ -51,6 +51,14 @@ class TraceGui(object):
                                self._nw_src_label, self._nw_dst_label, self._nw_tos_label, self._nw_proto_label,
                                self._tp_src_label, self._tp_dst_label]
 
+        '''
+        check_frame = Frame(self._top_frame)
+        check_frame.pack(side=TOP, anchor=W, pady=5)
+        self._trace_display_label = LabelBase(check_frame, 'Trace display', width=18)
+        radio_vals = ['FlowEntry list highlighting', 'seperate window']
+        self._radio_trace_display = Radios(check_frame, radio_vals)
+        '''
+
         # the buttons
         button_frame = Frame(self._top_frame, pady=5)
         button_frame.pack(side=BOTTOM, anchor=S)
@@ -60,7 +68,27 @@ class TraceGui(object):
         # Hide this window until its needed
         self._root.withdraw()
 
+        #
+        # The trace results window
+        #
+        self._trace_result = Toplevel()
+        self._trace_result.title('FlowEntry Trace Results')
+        self._trace_result.minsize(width=1200, height=700)
+        self._trace_result.withdraw()
+
+        # The trace results scrollable list
+        list_frame = Frame(self._trace_result)
+        list_frame.pack(side=TOP, expand=YES, fill=BOTH)
+        self._trace_results_list = ScrolledList(list_frame)
+
+        # The trace results close button
+        result_button_frame = Frame(self._trace_result, padx=5)
+        result_button_frame.pack(side=BOTTOM, anchor=S)
+        Buttons(result_button_frame, {'close' : self._trace_result.withdraw})
+
+
     def _trace_callback(self):
+        # Get the input specified in the Trace input window
         input_match_obj_list = []
         for label_entry in self._label_entries:
             if len(label_entry.entry_text) > 0 and label_entry.entry_text != 'empty':
@@ -74,6 +102,8 @@ class TraceGui(object):
         next_table = 0
         matched_flow_entries = OrderedDict()
 
+        # TODO the following while loop should all be in FlowTracer
+
         # Iterate the tables, starting with table 0
         # flow_tracer.apply_actions() will increment the table accordingly
         while keep_going:
@@ -83,8 +113,9 @@ class TraceGui(object):
                 print 'No match found in table %d, DROP' % next_table
                 keep_going = False
                 break
-            #print 'Applying actions %s' % (', '.join(matching_flow_entry.action_str_list_))
+
             (next_table, drop, output, next_input_matches) = flow_tracer.apply_actions(matching_flow_entry, next_input_matches)
+            # TODO Make the value a tuple, where [0] is the next_input_matches, and [1] is the result: goto table, drop, output... 
             matched_flow_entries[matching_flow_entry] = next_input_matches
 
             if drop:
@@ -95,11 +126,25 @@ class TraceGui(object):
                 break
 
             #print 'Jumping to table %d' % next_table
-            #print 'Resulting packet: %s' % ', '.join(next_input_matches)
 
+        #
+        # Open the self._trace_result window to display the results
+        #
+        self._trace_results_list.clear()
+        for (matched_flow_entry, result) in matched_flow_entries.iteritems():
+            self._trace_results_list.append_list_entry('')
+            self._trace_results_list.append_list_entry('Match found in table %s' % matched_flow_entry.table_)
+            self._trace_results_list.append_list_entry('        Flow Entry [%s]' % matched_flow_entry)
+            self._trace_results_list.append_list_entry('        Resulting Flow Entries [%d]' % len(result))
+            for r in result:
+                self._trace_results_list.append_list_entry('                [%s]' % r)
+        # Now display the window
+        self._trace_result.update()
+        self._trace_result.deiconify()
+        
         # This will call the root gui to display matched flow entries
-        if self._trace_complete_callback:
-            self._trace_complete_callback(matched_flow_entries)
+        if self._trace_results_callback:
+            self._trace_results_callback(matched_flow_entries)
 
     def _reset_callback(self):
         # Reset all of the fields

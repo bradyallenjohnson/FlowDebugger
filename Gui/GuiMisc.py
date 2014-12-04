@@ -173,17 +173,22 @@ class ScrolledList(object):
         self._list.pack(side=LEFT, expand=YES, fill=BOTH)
         #self._list.bind('<Double-1>', self.handlelist)
 
-        self._list_pos = 0 # TODO is this var necessary?
+        self._list_pos = 0
 
     def clear(self):
         self._list.delete(0, END)
+        self._list_pos = 0
 
     def append_list_entry(self, entry_str, fg=None):
-        self._list_pos += 1
+        pos = self._list_pos
+        self._list_pos +=1
         self._list.insert(END, entry_str)
         if fg:
-            size = self._list.size()
-            self._list.itemconfig(size-1, fg=fg)
+            self._list.itemconfig(pos, fg=fg)
+        return pos
+
+    def highlight_entry(self, entry_index, bg):
+        self._list.itemconfig(index=entry_index, bg=bg)
 
 class Popup(object):
     def __init__(self, popup_text):

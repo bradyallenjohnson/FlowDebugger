@@ -27,13 +27,32 @@ class FlowEntry(object):
     def __str__(self):
         return 'Match(%d)[%s] Actions(%d)[%s]' % (len(self.match_str_list_), self.raw_match_, len(self.action_str_list_), self.raw_actions_)
 
-    def __lt__(self, other):
-        if self.priority_ < other.priority_:
+    def __lt__(self, rhs):
+        if self.table_ < rhs.table_:
             return False
-        elif self.priority_ > other.priority_:
+        elif self.table_ > rhs.table_:
             return True
 
-        return self.raw_match_ < other.raw_match_
+        if self.priority_ < rhs.priority_:
+            return False
+        elif self.priority_ > rhs.priority_:
+            return True
+
+        return self.raw_match_ < rhs.raw_match_
+
+    def __eq__(self, rhs):
+        if self.table_ != rhs.table_:
+            return False
+
+        if self.priority_ != rhs.priority_:
+            return False
+
+        return self.raw_match_ == rhs.raw_match_
+
+    def __hash__(self):
+        if len(self.raw_match_) == 0:
+            return ((self.table_ << 16) & (self.priority_))
+        return self.raw_match_.__hash__()
 
 
 class FlowEntryContainer(object):
