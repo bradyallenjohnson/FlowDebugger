@@ -130,8 +130,11 @@ class FlowDebuggerGui(object):
         self._trace_gui.display()
 
 
-    # matched_flow_entries will be a dictionary of matched flow_entry to a list of FlowEntryMatch objects which
-    # will show which flow entries were matched and how the packet was changed by the corresponding actions
+    # matched_flow_entries will be a dictionary of matched flow_entry to (next_table, drop, output, next_input_matches) 
+    # The tuple indicates the results: next_input_matches will be a list of FlowEntryMatch objects which will
+    # show which flow entries were matched and how the packet was changed by the corresponding actions
     def _trace_results_callback(self, matched_flow_entries):
         for (matched_flow_entry, __) in matched_flow_entries.iteritems():
-            self._list.highlight_entry(self._list_entry_indices.get(matched_flow_entry), bg='grey')
+            index = self._list_entry_indices.get(matched_flow_entry)
+            if index is not None:
+                self._list.highlight_entry(index, bg='grey')

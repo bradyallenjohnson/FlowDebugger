@@ -7,7 +7,7 @@ Created on Nov 26, 2014
 from collections import OrderedDict
 from Tkinter import Frame, Toplevel
 from Tkconstants import BOTH, BOTTOM, LEFT, S, TOP, W, X, YES
-from Gui.GuiMisc import Buttons, LabelEntry, LabelOption, ScrolledList
+from Gui.GuiMisc import Buttons, LabelEntry, LabelOption, Popup, ScrolledList
 from Flows.FlowEntryFactory import FlowEntryFactory
 from Flows.FlowTracer import FlowTracer
 
@@ -88,6 +88,7 @@ class TraceGui(object):
 
 
     def _trace_callback(self):
+        #
         # Get the input specified in the Trace input window
         input_match_obj_list = []
         for label_entry in self._label_entries:
@@ -96,52 +97,42 @@ class TraceGui(object):
                 #print '\t%s' % match_object
                 input_match_obj_list.append(match_object)
 
-        flow_tracer = FlowTracer(self._flow_entries_container)
-        next_input_matches = input_match_obj_list
-        keep_going = True
-        next_table = 0
-        matched_flow_entries = OrderedDict()
-
-        # TODO the following while loop should all be in FlowTracer
-
-        # Iterate the tables, starting with table 0
-        # flow_tracer.apply_actions() will increment the table accordingly
-        while keep_going:
-            # This will try for a match in a particular table
-            matching_flow_entry = flow_tracer.get_match(next_table, next_input_matches)
-            if not matching_flow_entry:
-                print 'No match found in table %d, DROP' % next_table
-                keep_going = False
-                break
-
-            (next_table, drop, output, next_input_matches) = flow_tracer.apply_actions(matching_flow_entry, next_input_matches)
-            # TODO Make the value a tuple, where [0] is the next_input_matches, and [1] is the result: goto table, drop, output... 
-            matched_flow_entries[matching_flow_entry] = next_input_matches
-
-            if drop:
-                print 'Drop packet'
-                break
-            if output:
-                print 'Output packet to %s' % output
-                break
-
-            #print 'Jumping to table %d' % next_table
+        #
+        # Do the tracing
+        flow_tracer = FlowTracer(self._flow_entries_container, input_match_obj_list)
+        # returns a dictionary of MatchedFlowEntry to (next_table, drop, output, next_input_matches)
+        matched_flow_entries = flow_tracer.trace()
 
         #
         # Open the self._trace_result window to display the results
-        #
         self._trace_results_list.clear()
-        for (matched_flow_entry, result) in matched_flow_entries.iteritems():
-            self._trace_results_list.append_list_entry('')
-            self._trace_results_list.append_list_entry('Match found in table %s' % matched_flow_entry.table_)
-            self._trace_results_list.append_list_entry('        Flow Entry [%s]' % matched_flow_entry)
-            self._trace_results_list.append_list_entry('        Resulting Flow Entries [%d]' % len(result))
-            for r in result:
-                self._trace_results_list.append_list_entry('                [%s]' % r)
+        if len(matched_flow_entries) < 1:
+            Popup("No tracing matches found")
+            return
+
+        for (matched_flow_entry, results) in matched_flow_entries.iteritems():
+            if matched_flow_entry.table_ < 0:
+                # No match was found
+                self._trace_results_list.append_list_entry('')
+                self._trace_results_list.append_list_entry('No Match was found in table %s' % results[0])
+                next_action = 'Drop'
+            else:
+                self._trace_results_list.append_list_entry('')
+                self._trace_results_list.append_list_entry('Match found in table %s' % matched_flow_entry.table_)
+                self._trace_results_list.append_list_entry('        Flow Entry [%s]' % matched_flow_entry)
+                self._trace_results_list.append_list_entry('        Resulting Flow Entry Matches [%d]' % len(results[3]))
+                for r in results[3]:
+                    self._trace_results_list.append_list_entry('                [%s]' % r)
+                if results[1]:     next_action = 'Drop'
+                elif results[2]:   next_action = 'Output: %s' % results[2]
+                else:              next_action = 'Goto Table %s' % results[0]
+            self._trace_results_list.append_list_entry('        Resulting Action: [%s]' % next_action);
+
         # Now display the window
         self._trace_result.update()
         self._trace_result.deiconify()
-        
+
+        #
         # This will call the root gui to display matched flow entries
         if self._trace_results_callback:
             self._trace_results_callback(matched_flow_entries)

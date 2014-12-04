@@ -5,14 +5,17 @@ Created on Nov 27, 2014
 '''
 
 import copy
+from collections import OrderedDict
+from Flows.FlowEntries import FlowEntry
 from Flows.FlowEntryActions import FlowEntryActionSetField, FlowEntryActionMod, FlowEntryActionSwitchPort, FlowEntryActionSwitch 
 from Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4
 
 class FlowTracer(object):
 
     # flow_entries is a list as returned by Flows.DumpFlows.dump_flows()
-    def __init__(self, flow_entries):
+    def __init__(self, flow_entries, input_match_object_list):
         self._flow_entries = flow_entries
+        self._input_match_object_list = input_match_object_list
         self._set_fields_actions_to_match = {'eth_src' : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_src],
                                              'eth_dst' : [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_dst],
                                              'vlan_vid': [FlowEntryMatchLayer2, FlowEntryMatchLayer2.dl_vlan],
@@ -34,12 +37,42 @@ class FlowTracer(object):
                                       'mod_tp_dst'      : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_dst]
                                       }
 
+    def trace(self):
+        next_input_matches = self._input_match_object_list
+        keep_going = True
+        next_table = 0
+        matched_flow_entries = OrderedDict()
+
+        # Iterate the tables, starting with table 0
+        # flow_tracer.apply_actions() will increment the table accordingly
+        while keep_going:
+            #
+            # Try for a match in a particular table
+            drop = output = None
+            matching_flow_entry = self._get_match(next_table, next_input_matches)
+            if not matching_flow_entry:
+                drop = True
+                keep_going = False
+                matching_flow_entry = FlowEntry()
+            else:
+                # If a match was found, apply the corresponding actions
+                (next_table, drop, output, next_input_matches) = self._apply_actions(matching_flow_entry, next_input_matches)
+
+            # Store the results
+            matched_flow_entries[matching_flow_entry] = (next_table, drop, output, next_input_matches)
+
+            # If the packet is dropped or output, then stop processing
+            if drop or output:
+                keep_going = False
+
+        return matched_flow_entries
+
     #
     # Iterate the flow entries in the specified table and returns the 
     # flow_entry from flow_entries that matched input_match_object_list
     # If no match is found, return None
     #
-    def get_match(self, table, input_match_object_list):
+    def _get_match(self, table, input_match_object_list):
         # Iterate each Flow Entry in this table, based on priority
         for (__, entry_list) in self._flow_entries.iter_table_priority_entries(table):
             # Iterate each Flow Entry in this table with the same priority
@@ -66,7 +99,7 @@ class FlowTracer(object):
     # which is a result of applying the flow_entry actions
     # Return (next_table, drop, output, next_input_matches)
     #
-    def apply_actions(self, flow_entry, input_matches):
+    def _apply_actions(self, flow_entry, input_matches):
         next_table = flow_entry.table_ + 1
         drop = False
         output = None
@@ -77,12 +110,18 @@ class FlowTracer(object):
         for action in flow_entry.action_object_list_:
             if isinstance(action, FlowEntryActionSwitchPort):
                 #print 'FlowEntryActionSwitchPort: %s' % action
-                output = action.output_type
-                if action._packet_in:
-                    # TODO finish this
-                    print 'PktIn'
+                if action.output:
+                    output = '%s %s' % (action.output_type, action.output)
                 elif action.drop:
                     drop = True
+                else:
+                    output = action.output_type
+                '''
+                elif action._packet_in:
+                    # TODO finish this
+                    print 'PktIn'
+                '''
+
             elif isinstance(action, FlowEntryActionSwitch):
                 #print 'FlowEntryActionSwitch: %s' % action
                 if action.goto_table:
@@ -91,6 +130,7 @@ class FlowTracer(object):
                     metadata_match = FlowEntryMatchSwitch()
                     metadata_match.metadata = action.write_metadata
                     self._merge_match(next_input_matches, metadata_match)
+
             elif isinstance(action, FlowEntryActionSetField):
                 #print 'FlowEntryActionSetField: %s' % action
                 action_list = self._set_fields_actions_to_match.get(action.set_field_key)
@@ -110,6 +150,7 @@ class FlowTracer(object):
                 match = action_list[0]() # instantiate
                 action_list[1].fset(match, action.action_str_value)
                 self._merge_match(next_input_matches, match)
+
             else:
                 # TODO popup
                 print 'ERROR unknown action %s' % action
