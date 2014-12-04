@@ -14,7 +14,7 @@ class FlowDebuggerMain(object):
         #
         # Command Line Options
         #
-        self._parser = optparse.OptionParser(usage='Usage: %prog <option> [component...]')
+        self._parser = optparse.OptionParser(usage='Usage: sudo %prog [options] <switch>')
         self._parser.add_option('-g', '--gui',
                                 action='store_true',
                                 help='start the application in a GUI as opposed to displaying on stdout, Default')

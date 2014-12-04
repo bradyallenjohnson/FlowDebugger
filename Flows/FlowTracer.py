@@ -37,6 +37,15 @@ class FlowTracer(object):
                                       'mod_tp_dst'      : [FlowEntryMatchLayer4, FlowEntryMatchLayer4.tp_dst]
                                       }
 
+    #
+    # Returns an Ordered dictionary:
+    #   Key - the FlowEntry object that matched. If the FlowEntry.table_ is < 1, then there was no match
+    #   Value - A tuple containing the results: (next_table, drop, output, next_input_matches)
+    #      - next_table the next table to evaluate
+    #      - drop - True/False indicates if the packet should be dropped
+    #      - output - None/str indicates if the packet should be output and where
+    #      - next_input_matches - a list of FlowEntryMatches objects after having applied the FlowEntry actions.
+    # 
     def trace(self):
         next_input_matches = self._input_match_object_list
         keep_going = True
@@ -89,8 +98,7 @@ class FlowTracer(object):
                         # Go on to the next entry in the table
                         entry_matched = False
                         break
-                    #else:
-                        #print 'Match found, match_obj [%s] input [%s]' % (match_obj, input_match_obj)
+
                 if entry_matched:
                     return entry
 
