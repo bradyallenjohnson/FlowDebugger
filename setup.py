@@ -8,7 +8,7 @@ setup(name='FlowDebugger',
       author='Brady Johnson',
       author_email='bradyallenjohnson@gmail.com',
       url='https://github.com/bradyallenjohnson/FlowDebugger',
-      packages=['Flows', 'Gui'],
+      packages=['FlowDebugger', 'FlowDebugger/Flows', 'FlowDebugger/Gui'],
       scripts=['bin/flow_debugger']
      )
 

@@ -5,7 +5,7 @@ Created on Nov 20, 2014
 '''
 
 import optparse
-from Flows.DumpFlows import DumpFlows
+import Flows.DumpFlows as DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
 from Gui.FlowDebuggerGui import FlowDebuggerGui
 

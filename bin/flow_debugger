@@ -10,7 +10,7 @@ Created on Nov 3, 2014
 
 import sys
 
-from Flows.FlowDebuggerMain import FlowDebuggerMain
+from FlowDebugger.Flows.FlowDebuggerMain import FlowDebuggerMain
 
 if __name__ == '__main__':
     FlowDebuggerMain().main()

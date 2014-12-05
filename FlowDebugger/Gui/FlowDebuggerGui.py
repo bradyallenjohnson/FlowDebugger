@@ -7,7 +7,7 @@ Created on Nov 20, 2014
 from collections import OrderedDict
 from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
-from Flows.DumpFlows import DumpFlows
+import Flows.DumpFlows as DumpFlows
 from Flows.FlowEntries import FlowEntryFormatter
 from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
 from Gui.TraceGui import TraceGui
