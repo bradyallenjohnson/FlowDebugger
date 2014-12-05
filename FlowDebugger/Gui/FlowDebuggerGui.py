@@ -7,10 +7,10 @@ Created on Nov 20, 2014
 from collections import OrderedDict
 from Tkinter import Tk, Frame
 from Tkconstants import BOTH, BOTTOM, E, LEFT, N, RIGHT, TOP, W, X, YES
-import Flows.DumpFlows as DumpFlows
-from Flows.FlowEntries import FlowEntryFormatter
-from Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
-from Gui.TraceGui import TraceGui
+import FlowDebugger.Flows.DumpFlows as DumpFlows
+from FlowDebugger.Flows.FlowEntries import FlowEntryFormatter
+from FlowDebugger.Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
+from FlowDebugger.Gui.TraceGui import TraceGui
 
 class FlowDebuggerGui(object):
 

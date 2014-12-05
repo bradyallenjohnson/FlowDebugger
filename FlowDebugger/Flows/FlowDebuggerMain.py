@@ -5,9 +5,9 @@ Created on Nov 20, 2014
 '''
 
 import optparse
-import Flows.DumpFlows as DumpFlows
-from Flows.FlowEntries import FlowEntryFormatter
-from Gui.FlowDebuggerGui import FlowDebuggerGui
+import FlowDebugger.Flows.DumpFlows as DumpFlows
+from FlowDebugger.Flows.FlowEntries import FlowEntryFormatter
+from FlowDebugger.Gui.FlowDebuggerGui import FlowDebuggerGui
 
 class FlowDebuggerMain(object):
     def __init__(self):

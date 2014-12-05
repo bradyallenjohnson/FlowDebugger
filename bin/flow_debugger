@@ -7,9 +7,6 @@ Created on Nov 3, 2014
 @author: Brady Johnson, bradyallenjohnson@gmail.com
 '''
 
-
-import sys
-
 from FlowDebugger.Flows.FlowDebuggerMain import FlowDebuggerMain
 
 if __name__ == '__main__':

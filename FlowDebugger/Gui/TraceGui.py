@@ -7,9 +7,9 @@ Created on Nov 26, 2014
 from collections import OrderedDict
 from Tkinter import Frame, Toplevel
 from Tkconstants import BOTH, BOTTOM, LEFT, S, TOP, W, X, YES
-from Gui.GuiMisc import Buttons, LabelEntry, LabelOption, Popup, ScrolledList
-from Flows.FlowEntryFactory import FlowEntryFactory
-from Flows.FlowTracer import FlowTracer
+from FlowDebugger.Gui.GuiMisc import Buttons, LabelEntry, LabelOption, Popup, ScrolledList
+from FlowDebugger.Flows.FlowEntryFactory import FlowEntryFactory
+from FlowDebugger.Flows.FlowTracer import FlowTracer
 
 class TraceGui(object):
 

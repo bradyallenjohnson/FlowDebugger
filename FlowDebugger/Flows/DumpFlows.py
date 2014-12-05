@@ -6,8 +6,8 @@ Created on Nov 20, 2014
 
 import subprocess
 import tempfile
-from Flows.FlowEntries import FlowEntryContainer
-from Flows.FlowEntryFactory import FlowEntryFactory
+from FlowDebugger.Flows.FlowEntries import FlowEntryContainer
+from FlowDebugger.Flows.FlowEntryFactory import FlowEntryFactory
 
 #
 # Internal method to execute a system command and return the return_code and stdout as a str

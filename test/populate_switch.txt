@@ -1,0 +1,23 @@
+#
+# An input packet set to: dl_src=00:11:22:33:44:55,ip,nw_src=192.168.0.1,tcp,tp_src=8080
+# Should match in all tables, and output to port 5
+#
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=0 priority=256 in_port=2,ip actions=output:1"
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=0 priority=255 in_port=3,ip actions=output:2"
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=0 priority=254 in_port=4,ip actions=output:3"
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=0 priority=254 in_port=5,ip actions=output:4"
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=0 priority=1 actions=goto_table:1"
+
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=1 dl_src=00:11:22:33:44:55 actions=mod_dl_src=33:33:33:44:44:44,goto_table:2"
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=1 dl_src=11:22:33:44:55:66 actions=mod_dl_src=44:44:44:33:33:33,goto_table:2"
+
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=2 ip,nw_src=192.168.0.1 actions=mod_nw_src=172.168.0.1,goto_table:3"
+
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=3 tcp actions=goto_table:4"
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=3 udp actions=drop"
+
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=4 tcp,tp_src=8080 actions=set_field:9090->tp_src,write_metadata:1023/0xFFFF"
+
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=5 tcp,tp_src=9090,metadata=1023/0xFFFF actions=goto_table:6"
+
+sudo ovs-ofctl -O OpenFlow13 add-flow s1 "table=6 metadata=1023/0xFFFF actions=output:5"

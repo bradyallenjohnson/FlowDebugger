@@ -6,9 +6,9 @@ Created on Nov 24, 2014
 
 import inspect
 
-from Flows.FlowEntries import FlowEntry
-from Flows.FlowEntryActions import FlowEntryActionSwitch, FlowEntryActionSwitchPort, FlowEntryActionSetField, FlowEntryActionUnknown, FlowEntryActionMod
-from Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4, FlowEntryMatchUnknown
+from FlowDebugger.Flows.FlowEntries import FlowEntry
+from FlowDebugger.Flows.FlowEntryActions import FlowEntryActionSwitch, FlowEntryActionSwitchPort, FlowEntryActionSetField, FlowEntryActionUnknown, FlowEntryActionMod
+from FlowDebugger.Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4, FlowEntryMatchUnknown
 
 class FlowEntryFactory(object):
 

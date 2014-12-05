@@ -6,9 +6,9 @@ Created on Nov 27, 2014
 
 import copy
 from collections import OrderedDict
-from Flows.FlowEntries import FlowEntry
-from Flows.FlowEntryActions import FlowEntryActionSetField, FlowEntryActionMod, FlowEntryActionSwitchPort, FlowEntryActionSwitch 
-from Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4
+from FlowDebugger.Flows.FlowEntries import FlowEntry
+from FlowDebugger.Flows.FlowEntryActions import FlowEntryActionSetField, FlowEntryActionMod, FlowEntryActionSwitchPort, FlowEntryActionSwitch 
+from FlowDebugger.Flows.FlowEntryMatches import FlowEntryMatchSwitch, FlowEntryMatchLayer2, FlowEntryMatchLayer3, FlowEntryMatchLayer4
 
 class FlowTracer(object):
 
