@@ -21,6 +21,7 @@ There are several options to download and install the flow_debugger, as follows:
 		https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.tar.gz
 
 	Download it and install as follows:
+	$ wget https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.tar.gz
 	$ tar xvzf FlowDebugger-1.0.tar.gz
 	$ cd FlowDebugger-1.0
 	$ sudo python ./setup.py install
@@ -34,8 +35,10 @@ There are several options to download and install the flow_debugger, as follows:
 
 	Download the appropriate format and install as follows:
 	$ cd /
+	$ wget https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.linux-x86_64.tar.gz
 	$ sudo tar xvzf FlowDebugger-1.0.linux-x86_64.tar.gz
 		-- OR --
+	$ wget https://github.com/bradyallenjohnson/FlowDebugger/tree/master/dist/FlowDebugger-1.0.linux-x86_64.zip
 	$ sudo unzip FlowDebugger-1.0.linux-x86_64.zip
 
 4) Windows users
