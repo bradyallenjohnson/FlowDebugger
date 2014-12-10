@@ -17,6 +17,8 @@ class FlowDebuggerGui(object):
     # flow_entries is an instance of FlowEntries.FlowEntryContainer
     def __init__(self, switch, table, of_version, check_cookie=False, check_pkts=False, check_duration=False, check_priority=False, check_matched=False, sort_by_priority=False):
         self._first_refresh = True
+        self._flow_entries = None
+
         self._root = Tk()
         self._root.title('Flow Debugger')
         self._root.minsize(width=700, height=500)
@@ -31,6 +33,7 @@ class FlowDebuggerGui(object):
         self._host_label   = LabelEntry(label_entry_frame,  'Host',       'localhost')
         self._switch_label = LabelEntry(label_entry_frame,  'Switch',     switch)
         self._table_label  = LabelEntry(label_entry_frame,  'Table',      table)
+        self._filter_label = LabelEntry(label_entry_frame,  'Filter string')
         self._ofver_label  = LabelOption(label_entry_frame, 'OF version', of_version, 'OpenFlow11', 'OpenFlow13')
 
         # The info to display
@@ -69,9 +72,10 @@ class FlowDebuggerGui(object):
         # keep the index of each FlowEntry to be able to highlight the tracing later
         self._list_entry_indices = {}
 
+    # This is a blocking call
     def run(self):
         self._refresh_callback()
-        self._root.mainloop()
+        self._root.mainloop() # blocking call
 
     def _refresh_callback(self):
 
@@ -110,20 +114,29 @@ class FlowDebuggerGui(object):
             if self._radio_sort.radio_value == 'priority':
                 for (__, entry_list) in self._flow_entries.iter_table_priority_entries(table):
                     for entry in entry_list:
-                        if self._check_matched_only.checked and entry.n_packets_ == 0:
-                            continue
-                        index = self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
-                        self._list_entry_indices[entry] = index
+                        self._append_entry(flow_entry_formatter, entry)
             else:
                 for entry in self._flow_entries.iter_table_entries(table):
-                    if self._check_matched_only.checked and entry.n_packets_ == 0:
-                        continue
-                    index = self._list.append_list_entry(flow_entry_formatter.print_flow_entry(entry))
-                    self._list_entry_indices[entry] = index
+                    self._append_entry(flow_entry_formatter, entry)
+
+    def _append_entry(self, formatter, entry):
+        if self._check_matched_only.checked and entry.n_packets_ == 0:
+            return
+
+        flow_str = formatter.print_flow_entry(entry)
+        if self._filter_label.entry_text:
+            if self._filter_label.entry_text not in flow_str:
+                return
+
+        self._list_entry_indices[entry] = self._list.append_list_entry(flow_str)
 
     def _trace_callback(self):
-        if not self._flow_entries or len(self._flow_entries) < 1:
+        if not self._flow_entries or not self._flow_entries:
             Popup('No FlowEntries to Trace')
+            return
+
+        if self._filter_label.entry_text:
+            Popup('Cant trace when a filter string is specified')
             return
 
         self._trace_gui.flow_entries_conatiner = self._flow_entries
