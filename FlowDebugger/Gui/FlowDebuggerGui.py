@@ -11,6 +11,7 @@ import FlowDebugger.Flows.DumpFlows as DumpFlows
 from FlowDebugger.Flows.FlowEntries import FlowEntryFormatter
 from FlowDebugger.Gui.GuiMisc import Buttons, Checked, LabelBase, LabelEntry, LabelOption, Popup, Radios, ScrolledList
 from FlowDebugger.Gui.TraceGui import TraceGui
+from FlowDebugger.Gui.SshUserPw import SshUserPw
 
 class FlowDebuggerGui(object):
 
@@ -45,7 +46,8 @@ class FlowDebuggerGui(object):
         self._check_priority     = Checked(checks_frame, 'show priority',     set_checked=check_priority)
         self._check_cookie       = Checked(checks_frame, 'show cookie',       set_checked=check_cookie)
         self._check_matched_only = Checked(checks_frame, 'show matched only', set_checked=check_matched)
-        #self._radio_sort         = LabelRadio(checks_frame, 'sort by', ['priority', 'match string'])
+        self._reset_login        = Checked(checks_frame, 'reset login',       set_checked=False)
+        self._reset_login.display(False)
 
         # Sorting
         sort_frame = Frame(self._top_frame)
@@ -55,9 +57,6 @@ class FlowDebuggerGui(object):
         self._radio_sort = Radios(sort_frame, radio_vals, text_prefix='by ')
         if not sort_by_priority:
             self._radio_sort.radio_value = radio_vals[1]
-
-        # Create the Trace GUI window, but only show it when the trace button is pressed
-        self._trace_gui = TraceGui(self._trace_results_callback)
 
         # the buttons
         button_frame = Frame(self._top_frame, padx=5)
@@ -72,14 +71,23 @@ class FlowDebuggerGui(object):
         # keep the index of each FlowEntry to be able to highlight the tracing later
         self._list_entry_indices = {}
 
+        # Create the Trace GUI window, but only show it when the trace button is pressed
+        self._trace_gui = TraceGui(self._trace_results_callback)
+
+        # Create the User/Pw GUI window
+        self._user_gui = SshUserPw(self._refresh_callback_user_pw)
+        self._user_pass_stored = False
+
+
     # This is a blocking call
     def run(self):
         self._refresh_callback()
         self._root.mainloop() # blocking call
 
+    # This function is called when the "refresh" button is pressed on the main GUI window
     def _refresh_callback(self):
-
-        if len(self._switch_label.entry_text) == 0:
+        # We cant do anything if the switch name is empty
+        if not self._switch_label.entry_text:
             # TODO consider adding functionality to list all availale switches
             if self._first_refresh:
                 self._first_refresh = False
@@ -87,16 +95,39 @@ class FlowDebuggerGui(object):
                 Popup('Nothing to refresh\n\'Switch\' is empty')
             return
 
+        # Check if we need to get the username/password
         if self._host_label.entry_text != 'localhost':
-            Popup('Remote hosts arent supported yet\nOnly \'localhost\' is supported')
-            return
+            if not self._user_pass_stored or self._reset_login.checked:
+                self._user_gui.display(True)
+                return
+        else:
+            self._user_pass_stored = False
+            self._reset_login.checked = False
+            self._reset_login.display(False) # Hide it if it was previously being displayed
+        self._refresh_callback_dump()
 
+    # This function is called when the self._user_gui is displayed and its "ok" button is pressed
+    def _refresh_callback_user_pw(self):
+        self._user_pass_stored = True
+        self._reset_login.display(True)
+        self._refresh_callback_dump()
+
+    # This function is only called by either _refresh_callback() or _refresh_callback_user_pw()
+    def _refresh_callback_dump(self):
         self._list.clear()
         self._list_entry_indices.clear()
 
-        self._flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
-                                                  table=self._table_label.entry_text,
-                                                  of_version=self._ofver_label.entry_text)
+        
+        try:
+            self._flow_entries = DumpFlows.dump_flows(switch=self._switch_label.entry_text,
+                                                      table=self._table_label.entry_text,
+                                                      host=self._host_label.entry_text,
+                                                      user=self._user_gui.username,
+                                                      pw=self._user_gui.password,
+                                                      of_version=self._ofver_label.entry_text)
+        except Exception as e:
+            Popup('Caught an exception trying to dump flows:\n[%s]'%e)
+            return
 
         flow_entry_formatter = FlowEntryFormatter()
         flow_entry_formatter.show_cookie        =  self._check_cookie.checked
@@ -147,6 +178,7 @@ class FlowDebuggerGui(object):
     # The tuple indicates the results: next_input_matches will be a list of FlowEntryMatch objects which will
     # show which flow entries were matched and how the packet was changed by the corresponding actions
     def _trace_results_callback(self, matched_flow_entries):
+        # TODO need to iterate all entries and un-highlight them in case trace was called multiple times without haveing done a refresh 
         for (matched_flow_entry, __) in matched_flow_entries.iteritems():
             index = self._list_entry_indices.get(matched_flow_entry)
             if index is not None:

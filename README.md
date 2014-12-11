@@ -6,6 +6,17 @@ Tool to simplify and debug Open vSwitch OFS table output, taken from "ovf-ofctl 
 INSTALLATION:
 -------------
 
+Prerequisites:
+
+To be able to connect to switches remotely, SSH is used, which is implemented by the paramiko Python library.
+Here are the steps to install paramiko:
+
+	$ sudo pip install paramiko
+
+If your not interested in connecting to remote machines, and dont want to install paramiko, just use 
+flow_debugger version 1.0.
+
+
 There are several options to download and install the flow_debugger, as follows:
 
 1) Clone the git repository
@@ -42,8 +53,8 @@ There are several options to download and install the flow_debugger, as follows:
 	$ sudo unzip FlowDebugger-1.0.linux-x86_64.zip
 
 4) Windows users
-	I dont know if 'ovs-ofctl' is available for windows, but in the future it will be possible to execute
-	the flow_debugger towards a remote machine (currently unsupported)
+	I dont know if 'ovs-ofctl' is available for windows, so the flow_debugger may only be usable on windows
+	by connecting to a remote machine, using the "Host" field on the main window.
 
 	I havent prepared a windows version, but you can still install it on windows following these pseudo-steps:
 	(I dont know the exact windows syntax, sorry)
@@ -56,21 +67,28 @@ There are several options to download and install the flow_debugger, as follows:
 
 USAGE:
 ------
-Currently the flow_debugger must be run on the same machine where the Open vSwitch is running.
 To see the flow_debugger usage, execute the following:
 $ flow_debugger --help
 
-NOTICE: 'flow_debugger' must be run as root, using 'sudo'.
+NOTICE: 'flow_debugger' must be run as root, using 'sudo'. If the password is requested when executing
+sudo ovs-ofctl, then the applicationt wont work correctly. To get around this, do the following command:
 
+	$ sudo visudo
+	$ <Add this line, replacing mininet with your user> mininet ALL=NOPASSWD: ALL
+
+Revision History:
+-----------------
+
+1.0 Initial release
+1.1 Added remote connection functionality and paramiko dependency
 
 
 TODO:
 -----
 
+- remote connections is only supported in the gui
 - Not all FlowEntry match types and actions are supported.
 - Ive only ever tested with OpenFlow 1.3
-- Remote execution, for now the Host entry does nothing
-	-- The app needs to be run on the same host as the switch
 - The flow entry GUI output could be cleaned up. Consider Columns and column headings
 - Possibly move the main GUI window checkboxes to a "View" pull-down menu
 - Its not possible to copy/paste from the main window

@@ -143,11 +143,14 @@ class TraceGui(object):
             label_entry.clear_entry()
 
     def _cancel_callback(self):
-        self._root.withdraw()
+        self.display(False)
 
-    def display(self):
-        self._root.update()
-        self._root.deiconify()
+    def display(self, show=True):
+        if show:
+            self._root.update()
+            self._root.deiconify()
+        else:
+            self._root.withdraw()
 
     def set_flow_entries_container(self, fe_container):
         self._flow_entries_container = fe_container

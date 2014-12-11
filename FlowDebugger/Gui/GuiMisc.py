@@ -39,7 +39,7 @@ class LabelEntry(LabelBase):
         self._entry.pack(side=RIGHT)
 
     def _entry_input(self, event):
-        print 'Label [%s] text entered: %s' % (self.label_text, self.entry_text)
+        #print 'Label [%s] text entered: %s' % (self.label_text, self.entry_text)
         #self.clear_entry()
         #self.label_text = self.entry_text
         if self._on_input_callback:
@@ -134,6 +134,12 @@ class Checked(object):
             #print '%s Un-hecked' % self._check_text
             if self._on_uncheck_callback:
                 self._on_uncheck_callback()
+
+    def display(self, show=True):
+        if show:
+            self._check.pack(side=TOP)
+        else:
+            self._check.pack_forget()
 
     def get_checked(self):
         return True if self._checked_value.get() == 1 else False
